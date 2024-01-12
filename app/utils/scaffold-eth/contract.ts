@@ -7,7 +7,6 @@ import {
     ExtractAbiFunction,
 } from "abitype";
 import type { ExtractAbiFunctionNames } from "abitype";
-import type { Simplify } from "type-fest";
 import type { MergeDeepRecord } from "type-fest/source/merge-deep";
 import {
     Address,
@@ -20,9 +19,19 @@ import {
 } from "viem";
 import { UseContractEventConfig, UseContractReadConfig, UseContractWriteConfig } from "wagmi";
 import deployedContractsData from "@/app/contracts/deployedContracts";
+
 import externalContractsData from "@/app/contracts/externalContracts";
 import scaffoldConfig from "@/app/scaffold.config";
 
+/**
+ * @description Combines members of an intersection into a readable type.
+ * @example
+ * Prettify<{ a: string } & { b: string } & { c: number, d: bigint }>
+ * => { a: string, b: string, c: number, d: bigint }
+ */
+type Prettify<T> = {
+    [K in keyof T]: T[K];
+} & unknown;
 const deepMergeContracts = <D extends Record<PropertyKey, any>, S extends Record<PropertyKey, any>>(
     destination: D,
     source: S,
@@ -35,24 +44,22 @@ const deepMergeContracts = <D extends Record<PropertyKey, any>, S extends Record
     return result as MergeDeepRecord<D, S, { arrayMergeMode: "replace" }>;
 };
 const contractsData = deepMergeContracts(deployedContractsData, externalContractsData);
-
-export type InheritedFunctions = { readonly [key: string]: string };
-
-export type GenericContract = {
-    address: Address;
-    abi: Abi;
-    inheritedFunctions?: InheritedFunctions;
-};
-
 export type GenericContractsDeclaration = {
-    [chainId: number]: {
-        [contractName: string]: GenericContract;
-    };
+    [key: number]: readonly {
+        name: string;
+        chainId: string;
+        contracts: {
+            [key: string]: {
+                address: Address;
+                abi: Abi;
+            };
+        };
+    }[];
 };
 
 export const contracts = contractsData as GenericContractsDeclaration | null;
 
-type ConfiguredChainId = (typeof scaffoldConfig)["targetNetworks"][0]["id"];
+type ConfiguredChainId = (typeof scaffoldConfig)["targetNetwork"]["id"];
 
 type IsContractDeclarationMissing<TYes, TNo> = typeof contractsData extends { [key in ConfiguredChainId]: any }
     ? TNo
@@ -60,7 +67,7 @@ type IsContractDeclarationMissing<TYes, TNo> = typeof contractsData extends { [k
 
 type ContractsDeclaration = IsContractDeclarationMissing<GenericContractsDeclaration, typeof contractsData>;
 
-type Contracts = ContractsDeclaration[ConfiguredChainId];
+type Contracts = ContractsDeclaration[ConfiguredChainId][0]["contracts"];
 
 export type ContractName = keyof Contracts;
 
@@ -86,9 +93,7 @@ export type AbiFunctionOutputs<TAbi extends Abi, TFunctionName extends string> =
 
 export type AbiFunctionReturnType<TAbi extends Abi, TFunctionName extends string> = IsContractDeclarationMissing<
     any,
-    AbiParametersToPrimitiveTypes<AbiFunctionOutputs<TAbi, TFunctionName>> extends readonly [any]
-    ? AbiParametersToPrimitiveTypes<AbiFunctionOutputs<TAbi, TFunctionName>>[0]
-    : AbiParametersToPrimitiveTypes<AbiFunctionOutputs<TAbi, TFunctionName>>
+    AbiParametersToPrimitiveTypes<AbiFunctionOutputs<TAbi, TFunctionName>>[0]
 >;
 
 export type AbiEventInputs<TAbi extends Abi, TEventName extends ExtractAbiEventNames<TAbi>> = ExtractAbiEvent<
@@ -179,7 +184,7 @@ export type UseScaffoldEventConfig<
 } & IsContractDeclarationMissing<
     Omit<UseContractEventConfig, "listener"> & {
         listener: (
-            logs: Simplify<
+            logs: Prettify<
                 Omit<Log<bigint, number, any>, "args" | "eventName"> & {
                     args: Record<string, unknown>;
                     eventName: string;
@@ -189,7 +194,7 @@ export type UseScaffoldEventConfig<
     },
     Omit<UseContractEventConfig<ContractAbi<TContractName>, TEventName>, "listener"> & {
         listener: (
-            logs: Simplify<
+            logs: Prettify<
                 Omit<Log<bigint, number, false, TEvent, false, [TEvent], TEventName>, "args"> & {
                     args: AbiParametersToPrimitiveTypes<TEvent["inputs"]> &
                     GetEventArgs<
@@ -239,8 +244,6 @@ export type UseScaffoldEventHistoryConfig<
     blockData?: TBlockData;
     transactionData?: TTransactionData;
     receiptData?: TReceiptData;
-    watch?: boolean;
-    enabled?: boolean;
 };
 
 export type UseScaffoldEventHistoryData<

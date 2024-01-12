@@ -1,35 +1,31 @@
 import React, { useEffect, useState } from "react";
 import ChatWithCaptain from "./ChatWithCaptain";
-import { useGlobalState, useImageStore } from "@/app/store/store";
+import { useGlobalState, useImageStore, useSoundController } from "@/app/store/store";
 import type { PlanetData, ToggleOptions } from "@/app/types/appTypes";
 import { generatePrompt, stringToHex } from "@/app/utils/nerdUtils";
-import { Home } from "@/app/components/home";
-interface DescriptionPanelProps {
-    alienMessage: PlanetData;
-    playHolographicDisplay: () => void;
+import { BotScreen } from "@/app/components/AppComponent"
 
-    scanning: boolean;
-    handleScanning: (scanning: boolean) => void;
-    travelStatus: string | undefined;
-    description: string[];
+export const DescriptionPanel: React.FC = () => {
+    const sounds = useSoundController(state => state.sounds);
+    const audioController = sounds.audioController;
 
-    onDescriptionIndexChange: (index: number) => void;
-    selectedTokenId: string | null;
-    handleDescribeClick: () => void;
-    handleSubmit: (type: "character" | "background") => Promise<void>;
-}
+    function playSpaceshipOn() {
+        if (sounds.spaceshipOn) {
+            audioController?.playSound(sounds.spaceshipOn, true, 0.02);
+        }
+    }
 
-export const DescriptionPanel: React.FC<DescriptionPanelProps> = ({
-    alienMessage,
-    playHolographicDisplay,
-    handleSubmit,
-    scanning,
-    handleScanning,
-    travelStatus,
-    description,
-    handleDescribeClick,
-    selectedTokenId,
-}) => {
+    function playHolographicDisplay() {
+        if (sounds.holographicDisplay) {
+            audioController?.playSound(sounds.holographicDisplay, false, 1);
+        }
+    }
+
+    function playWarpSpeed() {
+        if (sounds.warpSpeed) {
+            audioController?.playSound(sounds.warpSpeed, false, 1.1);
+        }
+    }
     const [focused, setFocused] = useState(false);
 
     const [toggle, setToggle] = useState<boolean>(false);
@@ -54,12 +50,8 @@ export const DescriptionPanel: React.FC<DescriptionPanelProps> = ({
         setToggle(!toggle);
     };
 
-    const planetData = useGlobalState(state => state.planetData);
-    const metaScan = useGlobalState(state => state.metaScanData);
-    const state = useGlobalState(state => state);
     const nftData = useGlobalState(state => state.nftData);
     const chatData = useGlobalState(state => state.chatData);
-    const setChatData = useGlobalState(state => state.setChatData);
     const heroName = JSON.stringify(
         `${nftData.Level} ${nftData.Power1} ${nftData.Power2} ${nftData.Power3} ${nftData.Power3}`,
     ).replace(/undefined/g, "");
@@ -150,7 +142,6 @@ export const DescriptionPanel: React.FC<DescriptionPanelProps> = ({
 
     return (
         <>
-            -ENCODE SIGNAL-
             <div
                 className={`${focused ? "focused-right spaceship-display-screen" : "unfocused-right scale-100 spaceship-display-screen"
                     }  spaceship-panel screen-border`}
@@ -164,60 +155,57 @@ export const DescriptionPanel: React.FC<DescriptionPanelProps> = ({
                 }}
                 onClick={handleClick}
             >
+
+                <p className="text-3xl text-white font-bold p-5">N.A.V.I. COMMS</p>
                 <div
-                    className="absolute screen-border p-5 pt-0 "
+                    onClick={e => {
+                        e.stopPropagation();
+                    }}
+                    className="relative spaceship-display-screen overflow-scroll"
                     style={{
-                        height: "100%",
-                        width: "100%",
-                        top: "0%",
-                        left: "0%",
-
-                        flexDirection: "row",
-                        backdropFilter: "blur(3px)",
-
-                        position: "absolute",
+                        left: "-1%",
+                        color: "white",
                     }}
                 >
-                    <ul>
-                        <li className="text-3xl text-white font-bold p-5">N.A.V.I. COMMS</li>
-                    </ul>
-                    <div
-                        onClick={e => {
-                            e.stopPropagation();
-                        }}
-                        className="absolute spaceship-display-screen overflow-scroll"
-                        style={{
-                            left: "-1%",
-                        }}
-                    >
-                        <>
-
-                            <p className="description-text" style={{ color: "white" }}>
-                                {" "}
-                                ||||||||||||AI-UNIVERSE SIGNAL ENCODER||||||||||||||
-                            </p>
-
-                            <Home />
+                    <>
 
 
 
 
-                            <div className="hex-data">
-                                {stringToHex(modifiedPrompt)}
-                                {stringToHex(modifiedPrompt)}
-                                {stringToHex(modifiedPrompt)}
-                                {stringToHex(modifiedPrompt)}
-                                {stringToHex(modifiedPrompt)}
-                                {stringToHex(modifiedPrompt)}
-                                {stringToHex(modifiedPrompt)}
-                                {stringToHex(modifiedPrompt)}
-                            </div>
-                        </>
-                    </div>
+                        <BotScreen />
+
+
+                        <div className="hex-data">
+                            {stringToHex(modifiedPrompt)}
+                            {stringToHex(modifiedPrompt)}
+                            {stringToHex(modifiedPrompt)}
+                            {stringToHex(modifiedPrompt)}
+                            {stringToHex(modifiedPrompt)}
+                            {stringToHex(modifiedPrompt)}
+                            {stringToHex(modifiedPrompt)}
+                            {stringToHex(modifiedPrompt)}
+                        </div>
+                    </>
                 </div>
-            </div >
+            </div>
         </>
     );
 };
 
 export default DescriptionPanel;
+function playHolographicDisplay() {
+    throw new Error("Function not implemented.");
+}
+
+function handleDescribeClick() {
+    throw new Error("Function not implemented.");
+}
+
+function handleScanning(arg0: boolean) {
+    throw new Error("Function not implemented.");
+}
+
+function handleSubmit(arg0: string) {
+    throw new Error("Function not implemented.");
+}
+

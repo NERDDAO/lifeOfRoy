@@ -1,14 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { useImageStore } from "@/app/store/store";
+import { useSoundController, useImageStore, useGlobalState, useAppStore } from "@/app/store/store";
 import type { ApiResponses, ToggleOptions } from "@/app/types/appTypes";
 import { generatePrompt, stringToHex } from "@/app/utils/nerdUtils";
 
 export const Switchboard: React.FC = ({ }) => {
-    let playHolographicDisplay: () => void;
     const scanning = false;
-    const travelStatus = "";
-
-    const [modifiedPrompt, setModifiedPrompt] = useState("ALLIANCEOFTHEINFINITEUNIVERSE");
+    const state = useGlobalState(state => state);
+    const app = useAppStore(state => state);
     const imageState = useImageStore(state => state);
 
     // set string state to be either "character" or "background enforcing type
@@ -20,6 +18,29 @@ export const Switchboard: React.FC = ({ }) => {
     useEffect(() => {
         generateModifiedPrompt();
     }, [toggleOptions]);
+    const sounds = useSoundController(state => state.sounds);
+    const audioController = sounds.audioController;
+
+    function playSpaceshipOn() {
+        if (sounds.spaceshipOn) {
+            audioController?.playSound(sounds.spaceshipOn, true, 0.02);
+        }
+    }
+
+    function playHolographicDisplay() {
+        if (sounds.holographicDisplay) {
+            audioController?.playSound(sounds.holographicDisplay, false, 1);
+        }
+    }
+
+    function playWarpSpeed() {
+        if (sounds.warpSpeed) {
+            audioController?.playSound(sounds.warpSpeed, false, 1.1);
+        }
+    }
+
+    const setModifiedPrompt = state.setModifiedPrompt;
+    const modifiedPrompt = state.modifiedPrompt;
 
     const switchBoardButtons = ["Niji", "V5", "Background", "DESC", "URL", "CLEAR"];
 
@@ -76,11 +97,11 @@ export const Switchboard: React.FC = ({ }) => {
                                 }}
                                 type="text"
                                 className="prompt-input spaceship-display-screen overflow-hidden"
-                                value={displayPrompt}
+                                value={state.modifiedPrompt}
                                 onChange={e => {
                                     e.stopPropagation();
                                     playHolographicDisplay();
-                                    setDisplayPrompt(e.target.value);
+                                    setModifiedPrompt(e.target.value);
                                 }}
                             />
 
@@ -120,7 +141,7 @@ export const Switchboard: React.FC = ({ }) => {
                                     style={{ border: "1px solid", margin: "10px", alignContent: "right" }}
                                     onClick={e => {
                                         {
-                                            generateModifiedPrompt();
+                                            app.setTravelStatus("AcquiringTarget");
                                             playHolographicDisplay();
                                             //onModifiedPrompt(displayPrompt || "");
                                         }

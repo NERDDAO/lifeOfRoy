@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { Bars3Icon, BugAntIcon } from "@heroicons/react/24/outline";
-import { FaucetButton, RainbowKitCustomConnectButton } from "@/app/components/aiu/scaffold-eth";
+import { FaucetButton, RainbowKitCustomConnectButton } from "";
 import { useOutsideClick } from "@/app/hooks/aiu/scaffold-eth";
 
 type HeaderMenuLink = {

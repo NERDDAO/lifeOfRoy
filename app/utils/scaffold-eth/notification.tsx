@@ -1,5 +1,5 @@
 import React from "react";
-import { ToastPosition, toast } from "react-hot-toast";
+import { toast } from "react-hot-toast";
 import { XMarkIcon } from "@heroicons/react/20/solid";
 import {
     CheckCircleIcon,
@@ -7,20 +7,22 @@ import {
     ExclamationTriangleIcon,
     InformationCircleIcon,
 } from "@heroicons/react/24/solid";
-import { Spinner } from "@/app/components/aiu/assets/Spinner";
+import { Spinner } from "@/app/components/assets/Spinner";
 
-type NotificationProps = {
+type TPositions = "top-left" | "top-center" | "top-right" | "bottom-left" | "bottom-center" | "bottom-right";
+
+type TNotificationProps = {
     content: React.ReactNode;
     status: "success" | "info" | "loading" | "error" | "warning";
     duration?: number;
     icon?: string;
-    position?: ToastPosition;
+    position?: TPositions;
 };
 
 type NotificationOptions = {
     duration?: number;
     icon?: string;
-    position?: ToastPosition;
+    position?: TPositions;
 };
 
 const ENUM_STATUSES = {
@@ -32,7 +34,7 @@ const ENUM_STATUSES = {
 };
 
 const DEFAULT_DURATION = 3000;
-const DEFAULT_POSITION: ToastPosition = "top-center";
+const DEFAULT_POSITION: TPositions = "top-center";
 
 /**
  * Custom Notification
@@ -43,7 +45,7 @@ const Notification = ({
     duration = DEFAULT_DURATION,
     icon,
     position = DEFAULT_POSITION,
-}: NotificationProps) => {
+}: TNotificationProps) => {
     return toast.custom(
         t => (
             <div

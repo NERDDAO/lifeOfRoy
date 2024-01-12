@@ -1,4 +1,4 @@
-import { ChainWithAttributes } from "~~/utils/scaffold-eth";
+import AudioController from "../components/aiu/AudioController";
 
 export type MidjourneyConfig = {
     nijiFlag: boolean;
@@ -39,6 +39,7 @@ export type Sounds = {
     spaceshipOn?: AudioBuffer | null;
     holographicDisplay?: AudioBuffer | null;
     warpSpeed?: AudioBuffer | null;
+    audioController: AudioController | null;
 };
 
 export type ApiResponses = {
@@ -135,15 +136,7 @@ export type Quipux = {
     prevQuipuxId: string;
 }
 
-export type Manifest = {
-    manifestId: string;
-    pilotState: PilotState,
-    shipData: ShipState,
-    planetScan: PlanetData;
-    currentLocation: Location;
-    descriptiveText: string;
-    imageUrl: string;
-}
+
 
 export type QuestData = {
     issuedBy: string,
@@ -158,21 +151,31 @@ export type QuestData = {
 }
 
 export type HeroCodex = {
-    heroId: string;
-    shipId: string;
-    questId: string;
-    questBrief: string;
-    stats: Stats;
-    nftData: NftData;
-    abilities: string[];
-    inventory: Item[];
-    powerLevel: number;
-    funFact: string;
-    locationBeacon0: Location;
+    beaconData: Location;
     blockNumber: string;
     imageUrl: string;
+    heroCodex: {
+        heroId: string;
+        historyBrief: string;
+        questBrief: string;
+        inventory: Item[];
+        powerLevel: number;
+        funFact: string;
+        locationBeacon0: Location;
+    };
 };
-
+export type Manifest = {
+    uid: string;
+    action: string;
+    heroId: string;
+    nonce: number;
+    blockNumber: string;
+    pilotState: PilotState,
+    shipData: ShipState,
+    currentLocation: Location;
+    address: string;
+    prevManifestId: string;
+}
 export type PilotState = {
     pilotId: string,
     pilotName: string,

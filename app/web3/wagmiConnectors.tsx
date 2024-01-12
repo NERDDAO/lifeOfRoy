@@ -1,4 +1,3 @@
-"use client"
 import { connectorsForWallets } from "@rainbow-me/rainbowkit";
 import {
     braveWallet,
@@ -15,15 +14,13 @@ import { alchemyProvider } from "wagmi/providers/alchemy";
 import { publicProvider } from "wagmi/providers/public";
 import scaffoldConfig from "@/app/scaffold.config";
 import { burnerWalletConfig } from "@/app/web3/wagmi-burner/burnerWalletConfig";
-import { getTargetNetworks } from "@/app/utils/scaffold-eth";
+import { getTargetNetwork } from "@/app/utils/scaffold-eth";
 
-const targetNetworks = getTargetNetworks();
+const configuredNetwork = getTargetNetwork();
 const { onlyLocalBurnerWallet } = scaffoldConfig;
 
 // We always want to have mainnet enabled (ENS resolution, ETH price, etc). But only once.
-const enabledChains = targetNetworks.find(network => network.id === 1)
-    ? targetNetworks
-    : [...targetNetworks, chains.mainnet];
+const enabledChains = configuredNetwork.id === 1 ? [configuredNetwork] : [configuredNetwork, chains.mainnet];
 
 /**
  * Chains for the app
@@ -39,8 +36,8 @@ export const appChains = configureChains(
     {
         // We might not need this checkout https://github.com/scaffold-eth/scaffold-eth-2/pull/45#discussion_r1024496359, will test and remove this before merging
         stallTimeout: 3_000,
-        // Sets pollingInterval if using chains other than local hardhat chain
-        ...(targetNetworks.find(network => network.id !== chains.hardhat.id)
+        // Sets pollingInterval if using chain's other than local hardhat chain
+        ...(configuredNetwork.id !== chains.hardhat.id
             ? {
                 pollingInterval: scaffoldConfig.pollingInterval,
             }
@@ -56,12 +53,8 @@ const wallets = [
     braveWallet(walletsOptions),
     coinbaseWallet({ ...walletsOptions, appName: "scaffold-eth-2" }),
     rainbowWallet(walletsOptions),
-    ...(!targetNetworks.some(network => network.id !== chains.hardhat.id) || !onlyLocalBurnerWallet
-        ? [
-            burnerWalletConfig({
-                chains: appChains.chains.filter(chain => targetNetworks.map(({ id }) => id).includes(chain.id)),
-            }),
-        ]
+    ...(configuredNetwork.id === chains.hardhat.id || !onlyLocalBurnerWallet
+        ? [burnerWalletConfig({ chains: [appChains.chains[0]] })]
         : []),
     safeWallet({ ...walletsOptions, debug: false, allowedDomains: [/gnosis-safe.io$/, /app.safe.global$/] }),
 ];

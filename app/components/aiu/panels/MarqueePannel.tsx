@@ -1,32 +1,21 @@
 "use client"
-import { useGlobalState, useQuipuxStore } from "@/app/store/store";
+import { useGlobalState, useQuipuxStore, useAppStore } from "@/app/store/store";
 import type { Location } from "@/app/types/appTypes";
 
 interface PromptPanelProps {
-    loadingProgress: number;
-    error: string;
-    buttonMessageId: string | "";
-    imageUrl: string;
-    srcUrl: string | null;
-    loading: boolean;
-    onSubmitPrompt: (type: "character" | "background") => Promise<void>;
-    onSubmit: (type: "character" | "background") => Promise<void>;
-    handleButtonClick: (button: string, type: "character" | "background") => void;
 }
 
-export const MarqueePanel: React.FC<PromptPanelProps> = ({ imageUrl, loadingProgress, error }) => {
-    const interplanetaryStatusReport = useQuipuxStore(state => state.questData);
+export const MarqueePanel: React.FC<PromptPanelProps> = () => {
     const nftData = useGlobalState(state => state.nftData);
     //const myData = useGlobalState(state => state.myData);
     const myData = useQuipuxStore(state => state.database);
     const gstate = useGlobalState(state => state);
+    const loadingProgress = useAppStore(state => state.loadingProgress);
 
     const { ships: myShip, planetData: myLocations, quipux: myQuipuxs, pilotData: myPilot } = myData;
 
-    const pilot = myPilot ? myPilot[0] : ""
     const ship = myShip ? myShip[0] : ""
     const location: Location = myLocations ? myLocations[0] : {};
-    const quipux = myQuipuxs ? myQuipuxs[0] : ""
     return (
         <>
 

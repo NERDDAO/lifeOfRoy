@@ -53,29 +53,44 @@ const TargetDataDisplay = () => {
                 // Custom interface for image data
                 return (
                     <>
-                        some data
-                        {heroCodex &&
-                            <ul
-                                className=" w-[100%] h-[50%]"
-                                onClick={() => handleDataIndexChange()}
-                            >
+                        <ul
+                            className=" w-[100%] h-[50%]"
+                            onClick={() => handleDataIndexChange()}
+                        >
+                            stuff
+                            <LogViewer scannerOptions={[]} scannerOutput={{
+                                beaconData: {
+                                    quadrantId: "",
+                                    coordinates: [0, 0, 0],
+                                    locationName: "",
+                                    locationFunFact: "",
+                                    nearestLocationId: "",
+                                    navigationNotes: "",
+                                    imageUrl: ""
+                                },
+                                blockNumber: "",
+                                imageUrl: "",
+                                heroCodex: {
+                                    heroId: "",
+                                    historyBrief: "",
+                                    questBrief: "",
+                                    inventory: [],
+                                    powerLevel: 0,
+                                    funFact: "",
+                                    locationBeacon0: {
+                                        quadrantId: "",
+                                        coordinates: [0, 0, 0],
+                                        locationName: "",
+                                        locationFunFact: "",
+                                        nearestLocationId: "",
+                                        navigationNotes: "",
+                                        imageUrl: ""
+                                    }
+                                }
+                            }} />
 
-                                <span className="cursor-pointer text-white text-sm font-bold text-center -ml-10">SIGNAL{indexCount}/{heroCodexes.length - 1}</span>
 
-                                <h2 className="text-lg -mt-4 pl-14"><strong className="text-lg">{heroCodex?.data.parsed.heroCodex?.metaScanData?.heroId}</strong><br />{heroCodex?.data.parsed.heroCodex?.locationData?.nearestPlanetId}</h2>
-
-
-                                <li className="text-xs pl-20">{heroCodex?.data?.parsed.heroCodex?.locationData?.locationName}</li>
-
-                                <li className="text-xs pl-20">@{heroCodex?.data.parsed.heroCodex?.metaScanData?.locationBeacon0.locationId}</li>
-                                <div className="cursor-scroll text-white font-bold text-sm pl-20 pr-12 relative h-[70%] w-[140%] overflow-auto">
-                                    <div className="">{heroCodex?.data.parsed.heroCodex?.metaScanData?.questBrief}</div></div>
-
-
-                            </ul>}
-
-
-
+                        </ul>
                     </>
 
 

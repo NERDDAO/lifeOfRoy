@@ -6,7 +6,7 @@ import { GITHUB_URL, Path } from "../../constant";
 import Locale from "../../locales";
 import { Button } from "../ui/button";
 import Typography from "../ui/typography";
-import { useSidebarContext } from "@/app/components/home";
+import { useSidebarContext } from "@/app/components/AppComponent";
 
 const BotList = dynamic(async () => (await import("../bot/bot-list")).default, {
     loading: () => null,

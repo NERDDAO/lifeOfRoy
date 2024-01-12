@@ -1,15 +1,12 @@
 import React, { useEffect, useRef, useState } from "react";
-import { ToastBar, Toaster, toast } from "react-hot-toast";
+import { useAppStore } from "@/app/store/store"
+import RainbowKitCustomConnectButton from "../../scaffold-eth/RainbowKitCustomConnectButton";
 
-interface SpaceshipInterfaceProps {
-    travelStatus: string | undefined;
-}
-
-const SpaceshipInterface: React.FC<SpaceshipInterfaceProps> = ({ travelStatus }) => {
+const SpaceshipInterface: React.FC = () => {
     const [videoPlaying, setVideoPlaying] = useState(false);
     const videoId = "SS2f-6wZElA";
     const playerRef = useRef<YT.Player | null>(null);
-
+    const travelStatus = useAppStore(state => state.travelStatus)
     const toggleVideo = () => {
         setVideoPlaying(!videoPlaying);
     };
@@ -105,6 +102,8 @@ const SpaceshipInterface: React.FC<SpaceshipInterfaceProps> = ({ travelStatus })
                 >
                 </div>
             </div>
+
+            <RainbowKitCustomConnectButton />
             <div
                 className="screen-border spaceship-pannel spaceship-display-screen"
                 style={{

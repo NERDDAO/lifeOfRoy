@@ -2,40 +2,55 @@
 import { useEffect, useState } from "react";
 import ChatWithCaptain from "@/app/components/aiu/panels/ChatWithCaptain";
 import SwitchBoard from "@/app/components/aiu//panels/Switchboard";
-import { useNetwork } from "wagmi";
+import { useAccount, useNetwork } from "wagmi";
 import { BanknotesIcon } from "@heroicons/react/24/outline";
 import IntergalacticReportDisplay from "@/app/components/aiu/IntergalacticReportDisplay";
 import LogViewer from "@/app/components/aiu/panels/LogViewer";
-import { useAppStore, useGlobalState, useImageStore } from "@/app/store/store";
+import { useAppStore, useGlobalState, useQuipuxStore, useImageStore, useSoundController } from "@/app/store/store";
 import type { ApiResponses, HeroCodex } from "@/app/types/appTypes";
+import RainbowKitCustomConnectButton from "../../scaffold-eth/RainbowKitCustomConnectButton";
 export const Faucet = (props: {
     handleScanning: (scanning: boolean) => void;
     metadata: ApiResponses;
-    engaged: boolean;
     selectedTokenId: string;
     travelStatus: string | undefined;
-    playHolographicDisplay: () => void;
-    setEngaged: (engaged: boolean) => void;
     scannerOutput: HeroCodex;
     scannerOptions: any;
 }) => {
     const {
         handleScanning,
-        metadata,
-        engaged,
-        selectedTokenId,
-        playHolographicDisplay,
-        travelStatus,
-        setEngaged,
         scannerOutput,
         scannerOptions,
     } = props;
     const globalState = useGlobalState(state => state);
+    const quipux = useQuipuxStore(state => state);
     const imageState = useImageStore(state => state);
     const appState = useAppStore(state => state);
+    const account = useAccount()
     const dataClass = ["logData", "imageData", "SwitchBoard"];
     const [index, setDataIndex] = useState(0);
     const newIndex = 0;
+    const sounds = useSoundController(state => state.sounds);
+    const audioController = sounds.audioController;
+
+    function playSpaceshipOn() {
+        if (sounds.spaceshipOn) {
+            audioController?.playSound(sounds.spaceshipOn, true, 0.02);
+        }
+    }
+
+    function playHolographicDisplay() {
+        if (sounds.holographicDisplay) {
+            audioController?.playSound(sounds.holographicDisplay, false, 1);
+        }
+    }
+
+    function playWarpSpeed() {
+        if (sounds.warpSpeed) {
+            audioController?.playSound(sounds.warpSpeed, false, 1.1);
+        }
+    }
+
 
     const handleIndex = (change: number) => {
         {
@@ -56,7 +71,6 @@ export const Faucet = (props: {
                     <>
 
                         <LogViewer
-                            playHolographicDisplay={playHolographicDisplay}
                             scannerOutput={scannerOutput}
                             scannerOptions={scannerOptions}
                         />
@@ -96,11 +110,12 @@ export const Faucet = (props: {
             >
                 <div className="relative top-2 text-left p-2 pl-3"><h1 className="font-bold spaceship-display-screen p-2">N.A.V.I. Interface</h1>
                     <ul>
-                        <li>cmdr:{globalState.myPilots && globalState.myPilots[0]?.pilotData?.pilotName}</li>
-                        <li className="relative ">id: {appState.account?.displayName}
+
+                        <li>cmdr:{quipux.pilotData && quipux.pilotData.pilotName}</li>
+                        <li className="relative ">id: {quipux.pilotData?.pilotId}
                         </li>
 
-                        crd: <span className="text-white"> {globalState.myPilots && globalState.myPilots[0]?.pilotData?.credits}</span> µ</ul>
+                        crd: <span className="text-white"> {quipux.pilotData?.credits}</span> µ</ul>
                 </div>
 
             </label>
@@ -121,6 +136,7 @@ export const Faucet = (props: {
                         style={{ width: "200%", height: "100%" }}
                     >
                         <span className="relative text-2xl top-5 font-bold text-center ml-6">N.A.V.I. Interface</span>
+
                         <img className="absolute  opacity-30 -z-10 h-[20%] w-[20%]top-3 left-[42%]" src="/aiu.png" />
 
                         <div className="flex flex-row items-center justify-between w-full p-5 text-lg pl-6 cursor-pointer">

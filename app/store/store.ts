@@ -1,4 +1,4 @@
-import create from "zustand";
+import { create } from "zustand";
 import scaffoldConfig from "@/app/scaffold.config";
 import type {
     AIUBroadcast,
@@ -9,6 +9,7 @@ import type {
     QuestData,
     Manifest,
     Item,
+    Sounds,
     HeroCodex,
     MidjourneyConfig,
     NftData,
@@ -20,9 +21,8 @@ import type {
     AIUDatabase,
     Location,
 } from "@/app/types/appTypes";
-import { ChainWithAttributes } from "@/app/utils/scaffold-eth";
+import { TChainAttributes as ChainWithAttributes } from "@/app/utils/scaffold-eth";
 import { EAS, SchemaEncoder } from "@ethereum-attestation-service/eas-sdk";
-
 
 
 export type ImageStoreState = {
@@ -39,6 +39,19 @@ export type ImageStoreState = {
 
     resetImages: () => void;
 };
+
+export type SoundController = {
+    sounds: Sounds;
+    setSounds: (sounds: Sounds) => void;
+
+};
+
+export const useSoundController = create<SoundController>(set => ({
+    sounds: {} as Sounds,
+    setSounds: (sounds: Sounds) => set({ sounds }),
+
+}));
+
 
 export const useImageStore = create<ImageStoreState>(set => ({
     imageUrl: "/aiu.png",
@@ -57,6 +70,8 @@ export const useImageStore = create<ImageStoreState>(set => ({
 
 
 export type QuipuxStore = {
+    story: string[];
+    setStory: (story: string[]) => void;
     eas: any;
     setEas: (eas: any) => void;
     credentials: any;
@@ -90,6 +105,8 @@ export type QuipuxStore = {
 };
 
 export const useQuipuxStore = create<QuipuxStore>(set => ({
+    story: [] as string[],
+    setStory: (story: string[]) => set(() => ({ story: story })),
     aiuBroadcast: {} as AIUBroadcast,
     setAiuBroadcast: (aiuBroadcast: AIUBroadcast) => set(() => ({ aiuBroadcast: aiuBroadcast })),
     manifest: {} as Manifest,
@@ -316,7 +333,7 @@ export const useGlobalState = create<GlobalState>(set => ({
     setTokenIds: (tokenIds: string[]): void => set(() => ({ tokenIds })),
     nativeCurrencyPrice: 0,
     setNativeCurrencyPrice: (newValue: number): void => set(() => ({ nativeCurrencyPrice: newValue })),
-    targetNetwork: scaffoldConfig.targetNetworks[0],
+    targetNetwork: scaffoldConfig.targetNetwork,
     setTargetNetwork: (newTargetNetwork: ChainWithAttributes) => set(() => ({ targetNetwork: newTargetNetwork })),
     nftData: {} as NftData,
     setNftData: (nftData: NftData) => set(() => ({ nftData: nftData })),

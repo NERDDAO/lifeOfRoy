@@ -2,78 +2,73 @@ import { FunctionComponent, useEffect, useState } from "react";
 import IntergalacticReportDisplay from "./IntergalacticReportDisplay";
 import MetadataDisplay from "./MetadataDisplay";
 import { Faucet } from "./scaffold-eth/Faucet";
-import { useGlobalState, useImageStore, useAppStore, useQuipuxStore } from "@/app/store/store";
+import { useGlobalState, useImageStore, useAppStore, useQuipuxStore, useSoundController } from "@/app/store/store";
 import { stringToHex } from "@/app/utils/nerdUtils";
 
-interface ReadAIUProps {
-    warping: boolean;
-    scannerOutput: any;
-    playSpaceshipOn: () => void;
-    handleScanning: (scanning: boolean) => void;
-    scanning: boolean;
-    handleButtonClick: (button: string, type: "character" | "background") => Promise<void>;
-    buttonMessageId: string | "";
-    engaged: boolean;
-    modifiedPrompt: string;
-    playWarpSpeed: () => void;
-    playHolographicDisplay: () => void;
-    playSpaceshipHum: () => void;
-    setTravelStatus: (type: "NoTarget" | "AcquiringTarget" | "TargetAcquired") => void;
-    handleEngaged: (engaged: boolean) => void;
-    onSelectedTokenIdRecieved: (selectedTokenId: string) => void;
-    onImageSrcReceived: (imageSrc: string) => void;
-    onTokenIdsReceived: (tokenIds: string[]) => void;
-    onToggleMinimize: () => void; // Add this prop
-    onSubmit: (type: "character" | "background") => Promise<void>;
-    travelStatus: string | undefined;
-    setEngaged: (engaged: boolean) => void;
-    selectedTokenId: string;
-}
 
-export const ReadAIU: FunctionComponent<ReadAIUProps> = ({
-    playWarpSpeed,
-    playHolographicDisplay,
-    playSpaceshipHum,
-    handleScanning,
-    selectedTokenId,
-    scanning,
-    handleButtonClick,
-    buttonMessageId,
-    engaged,
-    setTravelStatus,
-    travelStatus,
-    onSubmit,
-    onSelectedTokenIdRecieved,
-    onToggleMinimize,
-    setEngaged, // Destructure the onToggleMinimize prop
-}) => {
+const ReadAIU = () => {
+    const travelStatus = useAppStore(state => state.travelStatus);
+    const selectedTokenId = useGlobalState(state => state.selectedTokenId);
+    const setSelectedTokenId = useGlobalState(state => state.setSelectedTokenId);
+    const buttonMessageId = useGlobalState(state => state.buttonMessageId);
     const tevents = useAppStore(state => state.transferEvents);
     const [mouseTrigger, setMouseTrigger] = useState<boolean>(false);
-
     const scannerOptions = ["abilities", "currentEquipmentAndVehicle", "funFact", "powerLevel", "currentMissionBrief"];
     const parsedMetadata = useGlobalState(state => state.apiResponses);
     const scannerOutput = useQuipuxStore(state => state.metaScanData);
+    const scanning = useAppStore(state => state.scanning);
+    const setScanning = useAppStore(state => state.setScanning);
+    const setTravelStatus = useAppStore(state => state.setTravelStatus);
+    const setEngaged = useGlobalState(state => state.setEngaged);
 
-    const imageState = useImageStore(state => ({
-        srcUrl: state.srcUrl,
-        imageUrl: state.imageUrl,
-        backgroundImageUrl: state.backgroundImageUrl,
-        displayImageUrl: state.displayImageUrl,
-    }));
+    const sounds = useSoundController(state => state.sounds);
+    const audioController = sounds.audioController;
 
-    const handleTokenIdChange = (e: string) => {
-        playHolographicDisplay();
-        onSelectedTokenIdRecieved(e); // Add this line
+    function playSpaceshipOn() {
+        if (sounds.spaceshipOn) {
+            audioController?.playSound(sounds.spaceshipOn, true, 0.02);
+        }
+    }
+
+    function playHolographicDisplay() {
+        if (sounds.holographicDisplay) {
+            audioController?.playSound(sounds.holographicDisplay, false, 1);
+        }
+    }
+
+    function playWarpSpeed() {
+        if (sounds.warpSpeed) {
+            audioController?.playSound(sounds.warpSpeed, false, 1.1);
+        }
+    }
+    const handleScanning = (scanning: boolean) => {
+        if (scanning === true) {
+        }
+        setScanning(!scanning);
+        console.log("SCANNING", { scanning });
     };
+
+    const handleEngaged = (engaged: boolean) => {
+        if (engaged === true && selectedTokenId !== "") {
+        }
+    };
+
+
+
+    function playSpaceshipHum() {
+        if (sounds.spaceshipHum) {
+            sounds.audioController?.playSound(sounds.spaceshipHum, false, 0.6);
+        }
+    }
+
+
 
     //the important function
     const handleButton = () => {
         playHolographicDisplay();
         if (travelStatus === "AcquiringTarget") {
-            playWarpSpeed();
             try {
                 setTimeout(() => {
-                    onSubmit("background");
                     setTravelStatus("TargetAcquired");
                 }, 2100);
             } catch (error) {
@@ -81,10 +76,9 @@ export const ReadAIU: FunctionComponent<ReadAIUProps> = ({
                 console.log(error);
             }
         } else if (travelStatus === "TargetAcquired") {
-            playWarpSpeed();
             try {
                 setTimeout(() => {
-                    handleButtonClick("U1", "background");
+                    // handleButtonClick("U1", "background");
                     console.log("clicked");
                 }, 2100);
             } catch (error) {
@@ -95,7 +89,7 @@ export const ReadAIU: FunctionComponent<ReadAIUProps> = ({
             if (selectedTokenId && travelStatus === "NoTarget") {
                 setTravelStatus("AcquiringTarget");
                 handleScanning(true);
-                playSpaceshipHum();
+                // playSpaceshipHum();
                 setEngaged(true);
             } else {
                 setTravelStatus("NoTarget");
@@ -104,23 +98,11 @@ export const ReadAIU: FunctionComponent<ReadAIUProps> = ({
         }
     };
 
-    useEffect(() => {
-        const button = document.getElementById("spaceshipButton");
-
-        if (travelStatus === "AcquiringTarget") {
-            button?.classList.add("active");
-            button?.classList.remove("loading");
-        } else if (travelStatus === "TargetAcquired") {
-            button?.classList.add("loading");
-            button?.classList.remove("active");
-        } else {
-            button?.classList.remove("active");
-            button?.classList.remove("loading");
-        }
-    }, [travelStatus]);
-
     const AvailableButtons = () => {
         const buttons = ["U1", "U2", "U3", "U4", "🔄", "V1", "V2", "V3", "V4"];
+
+
+
         return (
             <div
                 style={{
@@ -163,13 +145,11 @@ export const ReadAIU: FunctionComponent<ReadAIUProps> = ({
                             width: "3.5rem",
                         }}
                         onClick={() => {
-                            playWarpSpeed();
                             try {
                                 setTimeout(() => {
-                                    handleButtonClick(button, "background");
+                                    // handleButtonClick(button, "background");
                                 }, 2100);
                             } catch (error) {
-                                setTravelStatus("NoTarget");
                                 console.log(error);
                             }
                         }}
@@ -180,6 +160,21 @@ export const ReadAIU: FunctionComponent<ReadAIUProps> = ({
             </div>
         );
     };
+    useEffect(() => {
+        const button = document.getElementById("spaceshipButton");
+
+        if (travelStatus === "AcquiringTarget") {
+            button?.classList.add("active");
+            button?.classList.remove("loading");
+        } else if (travelStatus === "TargetAcquired") {
+            button?.classList.add("loading");
+            button?.classList.remove("active");
+        } else {
+            button?.classList.remove("active");
+            button?.classList.remove("loading");
+        }
+    }, [travelStatus]);
+
 
     return (
         <>
@@ -196,12 +191,11 @@ export const ReadAIU: FunctionComponent<ReadAIUProps> = ({
                         className="spaceship-display-screen z-[500000000000000000000]"
                     >
                         <div className="screen-border h-full text-black bg-black">
-                            {selectedTokenId && travelStatus == "NoTarget" ? (
+                            {!selectedTokenId && travelStatus == "NoTarget" ? (
                                 <div
                                     className="description-text hex-prompt font-bold text-[1rem] 
                                     absolute top-[0%] h-[60%] w-full p-[0.1rem] pt-[2rem] text-white"
                                     onClick={() => {
-                                        playHolographicDisplay();
                                         handleButton();
                                     }}
                                 >
@@ -218,7 +212,7 @@ export const ReadAIU: FunctionComponent<ReadAIUProps> = ({
                                     </div>
                                 )
                             )}
-                            {!selectedTokenId && (
+                            {selectedTokenId && (
                                 <div
                                     className="description-text hex-prompt font-bold text-[1rem] 
                                     absolute top-[0%] h-full w-full  mt-[-2rem] text-white"
@@ -230,7 +224,7 @@ export const ReadAIU: FunctionComponent<ReadAIUProps> = ({
                             <select
                                 id="tokenIdSelector"
                                 value={selectedTokenId}
-                                onChange={e => handleTokenIdChange(e.target.value)}
+                                onChange={e => { setSelectedTokenId(e.target.value) }}
                                 className="dropdown-container hex-prompt 
                                 dropdown-option text-green content-center pl-3 top-[80%]"
                             >
@@ -242,7 +236,7 @@ export const ReadAIU: FunctionComponent<ReadAIUProps> = ({
                                         className="dropdown-option hex-prompt 
                                         dropdown-option  content-center"
                                     >
-                                        {tokenId}
+                                        {tevents[tokenId].args.tokenId.toString()}
                                     </option>
                                 ))}
                             </select>
@@ -250,7 +244,6 @@ export const ReadAIU: FunctionComponent<ReadAIUProps> = ({
                                 id="spaceshipButton"
                                 className="spaceship-display-screen hex-data master-button"
                                 onClick={() => {
-                                    playHolographicDisplay();
                                     handleButton();
                                 }}
                             >
@@ -265,11 +258,8 @@ export const ReadAIU: FunctionComponent<ReadAIUProps> = ({
             <Faucet
                 handleScanning={handleScanning}
                 metadata={parsedMetadata}
-                engaged={engaged}
                 selectedTokenId={selectedTokenId}
                 travelStatus={travelStatus}
-                setEngaged={setEngaged}
-                playHolographicDisplay={playHolographicDisplay}
                 scannerOutput={scannerOutput}
                 scannerOptions={scannerOptions}
             />
@@ -277,12 +267,6 @@ export const ReadAIU: FunctionComponent<ReadAIUProps> = ({
             <div className={`spaceship-display-screen token-selection-panel${selectedTokenId! == "" ? "-focused" : "-focused"}`}>
                 <div className="text-black relative opacity-100 h-full w-full overflow-hidden">
                     <MetadataDisplay
-                        imageState={imageState}
-                        engaged={engaged}
-                        setEngaged={setEngaged}
-                        playHolographicDisplay={playHolographicDisplay}
-                        scannerOutput={scannerOutput}
-                        scannerOptions={scannerOptions}
                     />
                 </div>
             </div>

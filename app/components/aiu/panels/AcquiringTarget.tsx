@@ -1,26 +1,15 @@
 import React, { useEffect, useRef } from "react";
-import { navi } from "@/app/hooks/aiu/useAIU";
 import toast, { ToastBar, Toaster } from "react-hot-toast";
 import { Spinner } from "@/app/components/aiu/assets/Spinner";
-import { useGlobalState } from "@/app/store/store";
-interface AcquiringTargetProps {
-    travelStatus: string | undefined;
-    selectedTokenId: string | null;
-    loading: boolean;
-}
+import { useGlobalState, useAppStore } from "@/app//store/store";
 
 
-
-
-const AcquiringTarget: React.FC<AcquiringTargetProps> = ({ travelStatus, selectedTokenId }) => {
+const AcquiringTarget: React.FC = () => {
     let naavi: any = null
     const store = useGlobalState(state => state.setSelectedDescription)
-    const useNavii = async () => {
-        naavi = await navi()
-        store(naavi.message)
-        return naavi
-    }
 
+    const selectedTokenId = useGlobalState(state => state.selectedTokenId)
+    const travelStatus = useAppStore(state => state.travelStatus)
 
     return (
         <>
@@ -51,7 +40,7 @@ const AcquiringTarget: React.FC<AcquiringTargetProps> = ({ travelStatus, selecte
                                 flexDirection: "column",
                                 alignItems: "center",
                             }}
-                            onClick={() => { useNavii() }}
+
                         >
                             TOKEN ID
                             <div>
@@ -67,35 +56,6 @@ const AcquiringTarget: React.FC<AcquiringTargetProps> = ({ travelStatus, selecte
             </div>
 
             <div>
-                <Toaster
-                    containerClassName="w-[30%] h-[30%]"
-                    containerStyle={{
-                        top: "40%",
-                        left: "30%",
-                        right: 20,
-                        bottom: 80,
-                    }}
-                    toastOptions={{
-                        className: "hex-prompt",
-
-                        success: {
-                            duration: 6000,
-                            style: {
-                                background: "#1f2937",
-                                color: "#fff",
-                                padding: 5,
-                            },
-                            iconTheme: {
-                                primary: "orange",
-                                secondary: "black",
-                            },
-
-                        },
-                    }}
-                    position="bottom-left"
-                >
-
-                </Toaster>
 
                 <div
                     className="screen-border acquiring-target-card 
@@ -125,3 +85,34 @@ const AcquiringTarget: React.FC<AcquiringTargetProps> = ({ travelStatus, selecte
 };
 
 export default AcquiringTarget;
+
+/*  <Toaster
+                    containerClassName="w-[30%] h-[30%]"
+                    containerStyle={{
+                        top: "40%",
+                        left: "30%",
+                        right: 20,
+                        bottom: 80,
+                    }}
+                    toastOptions={{
+                        className: "hex-prompt",
+
+                        success: {
+                            duration: 6000,
+                            style: {
+                                background: "#1f2937",
+                                color: "#fff",
+                                padding: 5,
+                            },
+                            iconTheme: {
+                                primary: "orange",
+                                secondary: "black",
+                            },
+
+                        },
+                    }}
+                    position="bottom-left"
+                >
+
+                </Toaster>
+*/

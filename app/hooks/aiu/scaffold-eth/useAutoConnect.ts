@@ -1,11 +1,10 @@
-"use client"
 import { useEffect } from "react";
 import { useEffectOnce, useLocalStorage, useReadLocalStorage } from "usehooks-ts";
-import { Chain, hardhat } from "viem/chains";
+import { hardhat } from "viem/chains";
 import { Connector, useAccount, useConnect } from "wagmi";
 import scaffoldConfig from "@/app/scaffold.config";
-import { burnerWalletId } from "@/app/web3/wagmi-burner/BurnerConnector";
-import { getTargetNetworks } from "@/app/utils/scaffold-eth";
+import { burnerWalletId, defaultBurnerChainId } from "@/app/web3/wagmi-burner/BurnerConnector";
+import { getTargetNetwork } from "@/app/utils/scaffold-eth";
 
 const SCAFFOLD_WALLET_STROAGE_KEY = "scaffoldEth2.wallet";
 const WAGMI_WALLET_STORAGE_KEY = "wagmi.wallet";
@@ -15,13 +14,11 @@ const SAFE_ID = "safe";
 
 /**
  * This function will get the initial wallet connector (if any), the app will connect to
- * @param initialNetwork
  * @param previousWalletId
  * @param connectors
  * @returns
  */
 const getInitialConnector = (
-    initialNetwork: Chain,
     previousWalletId: string,
     connectors: Connector[],
 ): { connector: Connector | undefined; chainId?: number } | undefined => {
@@ -32,13 +29,14 @@ const getInitialConnector = (
         return { connector: safeConnectorInstance };
     }
 
-    const allowBurner = scaffoldConfig.onlyLocalBurnerWallet ? initialNetwork.id === hardhat.id : true;
+    const targetNetwork = getTargetNetwork();
+    const allowBurner = scaffoldConfig.onlyLocalBurnerWallet ? targetNetwork.id === hardhat.id : true;
 
     if (!previousWalletId) {
         // The user was not connected to a wallet
         if (allowBurner && scaffoldConfig.walletAutoConnect) {
             const connector = connectors.find(f => f.id === burnerWalletId);
-            return { connector, chainId: initialNetwork.id };
+            return { connector, chainId: defaultBurnerChainId };
         }
     } else {
         // the user was connected to wallet
@@ -77,7 +75,7 @@ export const useAutoConnect = (): void => {
     }, [accountState.isConnected, accountState.connector?.name]);
 
     useEffectOnce(() => {
-        const initialConnector = getInitialConnector(getTargetNetworks()[0], walletId, connectState.connectors);
+        const initialConnector = getInitialConnector(walletId, connectState.connectors);
 
         if (initialConnector?.connector) {
             connectState.connect({ connector: initialConnector.connector, chainId: initialConnector.chainId });

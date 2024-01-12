@@ -1,11 +1,10 @@
 import { WriteContractResult, getPublicClient } from "@wagmi/core";
 import { Hash, SendTransactionParameters, TransactionReceipt, WalletClient } from "viem";
 import { useWalletClient } from "wagmi";
-import { getParsedError } from "@/app/components/aiu/scaffold-eth";
-import { getBlockExplorerTxLink, notification } from "@/app/utils/scaffold-eth";
+import { getBlockExplorerTxLink, getParsedError, notification } from "@/app/utils/scaffold-eth";
 
 type TransactionFunc = (
-    tx: (() => Promise<WriteContractResult>) | (() => Promise<Hash>) | SendTransactionParameters,
+    tx: (() => Promise<WriteContractResult>) | SendTransactionParameters,
     options?: {
         onBlockConfirmation?: (txnReceipt: TransactionReceipt) => void;
         blockConfirmations?: number;
@@ -20,7 +19,7 @@ const TxnNotification = ({ message, blockExplorerLink }: { message: string; bloc
         <div className={`flex flex-col ml-1 cursor-default`}>
             <p className="my-0">{message}</p>
             {blockExplorerLink && blockExplorerLink.length > 0 ? (
-                <a href={blockExplorerLink} target="_blank" rel="noreferrer" className="block link text-md">
+                <a href={blockExplorerLink} target="_blank" rel="noreferrer" className="block underline text-md">
                     check out transaction
                 </a>
             ) : null}
@@ -29,7 +28,7 @@ const TxnNotification = ({ message, blockExplorerLink }: { message: string; bloc
 };
 
 /**
- * @description Runs Transaction passed in to returned function showing UI feedback.
+ * @description Runs Transaction passed in to returned funtion showing UI feedback.
  * @param _walletClient
  * @returns function that takes a transaction and returns a promise of the transaction hash
  */
@@ -57,12 +56,7 @@ export const useTransactor = (_walletClient?: WalletClient): TransactionFunc => 
             notificationId = notification.loading(<TxnNotification message="Awaiting for user confirmation" />);
             if (typeof tx === "function") {
                 // Tx is already prepared by the caller
-                const result = await tx();
-                if (typeof result === "string") {
-                    transactionHash = result;
-                } else {
-                    transactionHash = result.hash;
-                }
+                transactionHash = (await tx()).hash;
             } else if (tx != null) {
                 transactionHash = await walletClient.sendTransaction(tx);
             } else {

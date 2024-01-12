@@ -1,9 +1,142 @@
 
-
-import { useQuipuxStore, useImageStore, useEncoder, useGlobalState, useAppStore } from "~~/services/store/store";
+import { useSoundController, useQuipuxStore, useImageStore, useEncoder, useGlobalState, useAppStore } from "@/app/store/store";
 import axios from "axios";
 import { toast } from "react-hot-toast";
-import type { NftData, QuestData, HeroCodex, PilotState, ShipState, PlanetData, Location, Item, Stats } from "~~/types/appTypes";
+// index.tsx
+import { useCallback, useEffect, useState } from "react";
+import { ethers } from "ethers";
+import GraphemeSplitter from "grapheme-splitter";
+
+
+const url = process.env.MONGODB_URI || 'mongodb://0.0.0.0:27017'
+// Database Name
+const dbName = 'mementoMori';
+
+
+
+import type {
+    ApiResponses,
+    ChatData,
+    HeroCodex,
+    Manifest,
+    NftData,
+    PilotState,
+    PlanetData,
+    ProgressResponseType,
+    QuestData,
+    Quipux,
+    Response,
+    ShipState,
+    Sounds,
+} from "@/app/types/appTypes";
+import { EAS } from "@ethereum-attestation-service/eas-sdk";
+
+
+// BUSINESS END
+const EASContractAddress = "0xC2679fBD37d54388Ce493F1DB75320D236e1815e";
+const eas = new EAS(EASContractAddress);
+
+export const useHeroCodex = async (nftData: NftData, blockNumber: string) => {
+    let r, ship, load
+    load = { nftData, blockNumber }
+    console.log("load", load);
+
+    const response = await fetch("/api/heroCodex",
+        {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ load }),
+        });
+    r = await response.json();
+    const parsed = JSON.parse(r.beacon)
+    console.log("rawResponse", r.beacon, parsed);
+    ship = await attestShip(r.beacon);
+    parsed.imageUrl = ship.image;
+    postCodex(parsed);
+
+    return { parsed, ship }
+
+}
+
+export const fetchDb = async (quipux: any) => {
+
+    // Initialize the sdk with the address of the EAS Schema contract address
+    quipux.setEas(eas);
+
+    try {
+        const response = await fetch("http://0.0.0.0:3000/aiu/database"); // assume the same host
+        ;
+        const json = await response.json();
+        console.log(json, "Player data from DB");
+        quipux.setDatabase(json)
+
+    } catch (e: any) {
+        console.log(e.message);
+
+
+    }
+
+};
+
+
+export const postCodex = async (heroCodex: HeroCodex) => {
+
+    // Initialize the sdk with the address of the EAS Schema contract address
+
+    try {
+        const response = await fetch("http://0.0.0.0:3000/aiu/heroCodex",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(heroCodex),
+
+            }
+
+        ); // assume the same host
+        ;
+        console.log("Player data from DB");
+        return response
+
+    } catch (e: any) {
+        console.log(e.message);
+
+
+    }
+
+};
+
+
+export const postPilotShip = async (pilotState: PilotState, shipState: ShipState, beaconData: Location, address: string) => {
+
+    const load = { pilotState, shipState, beaconData, address }
+    console.log("load", load);
+
+    try {
+        const response = await fetch("http://0.0.0.0:3000/aiu/pilotShip",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ load }),
+
+            }
+
+        ); // assume the same host
+        ;
+        console.log("Player data from DB", response);
+
+    } catch (e: any) {
+        console.log(e.message);
+
+
+    }
+
+};
 
 
 export const useFetchScanningReport = async (nftQuery: NftData) => {
@@ -37,151 +170,7 @@ export const fetchInterplanetaryStatusReport = async () => {
 };
 
 
-
-
-export const fetchUserBalance = async (address: string, contract: any) => {
-    if (!address || !contract) return BigInt(0);
-    try {
-        return await contract.balanceOf(address);
-    } catch (error) {
-        console.error("Error fetching user balance:", error);
-        return BigInt(0);
-    }
-};
-
-
-export const useFetchNFT = async (tokenId: string, uri: string) => {
-    const response = await fetch(uri);
-    const metadata = await response.json();
-    console.log(uri, metadata);
-
-    console.log("Metadata received in the parent component:", metadata);
-    // Extract the attributes from the metadata
-    const attributes = metadata?.attributes.reduce((acc: any, attr: any) => {
-        acc[attr.trait_type] = attr.value;
-        return acc;
-    }, {});
-    const ipfsGateway = "https://ipfs.ai-universe.io"; // Choose a gateway
-    const imageUrl = metadata?.image.replace("ipfs://", `${ipfsGateway}/ipfs/`);
-    console.log("attributes", metadata);
-    if (!attributes) return;
-    const nftQuery = {
-        nftId: tokenId,
-        Level: attributes?.Level,
-        Power1: attributes["Power 1"],
-        Power2: attributes["Power 2"],
-        Power3: attributes["Power 3"],
-        Power4: attributes["Power 4"],
-        Alignment1: attributes["Alignment 1"],
-        Alignment2: attributes["Alignment 2"],
-        Side: attributes.Side,
-    };
-
-    toast.success(`
-                INCOMING TRANSMISSION\n
-            Established connection with:\n
-            ${nftQuery.Level} ${nftQuery.Power1} ${nftQuery.Power2}\n
-            Agent #${tokenId} of the A.I.U.
-           `);
-    return { nftQuery, imageUrl };
-};
-
-// BUSINESS END
-// generate text--> attest +  generateImage -> send to backend
-
-
-export const getHeroCodex = async (nftQuery: any, capname: string) => {
-    let r, pons
-    console.log(nftQuery);
-
-    try {
-        const response = await fetch("/api/heroCodex", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(nftQuery.nftQuery),
-        });
-
-        r = await response.json();
-        console.log("rawResponse", nftQuery, r);
-        const parsed = JSON.parse(r)
-        const codexData = { nftQuery, parsed }
-        const ship = await attestShip(r)
-
-        pons = { parsed, codexData, ship };
-        console.log("pons", pons);
-        return pons;
-
-    } catch (error) {
-        console.error("Error sending message:", error);
-    }
-    finally {
-
-        const codex = await attestCodex(pons?.ship, pons?.codexData, capname);
-        console.log("beacon", pons);
-
-        return { r, pons, codex };
-    }
-};
-
-export const getIsgr = async (r: any) => {
-    // Save only if player id does not exist
-    const c = await fetch("http://0.0.0.0:3000/aiu/generate_report",
-        {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: r,
-        })
-    toast.success("Captain Attested")
-    const cap = await c.json()
-    console.log(cap)
-    return cap
-}
-
-
-
-// Signer must be an ethers-like signer.
-//
-const getBeaconPic = async (r: any, nftQuery: any, capname: string) => {
-
-    const response = await fetch("/api/heroCodex", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: r,
-    });
-
-    const rawResponse = await response.json();
-
-    const parsedResponse = JSON.parse(r)
-
-    const codexData = { nftQuery, parsedResponse }
-    const ship = await attestShip(rawResponse)
-    const codex = await attestCodex(ship, codexData, capname);
-
-    console.log("shipData", rawResponse, parsedResponse, codex)
-    return { rawResponse, codex };
-}
-
-export const navi = async () => {
-    const response = await fetch("http://0.0.0.0:3000/aiu/navi", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-    })
-    const parsed = await response.json()
-    return parsed
-}
-
-
-
 export const attestCodex = async (image: string, codexData: any, capname: string) => {
-    const { nftQuery, r } = codexData
     const payload = { image, codexData, capname }
 
     const response = await fetch("http://0.0.0.0:3000/aiu/codex", {
@@ -214,8 +203,6 @@ export const attestShip = async (shipData: any) => {
 
     console.log("ShipRaw", rawResponse);
 
-
-    console.log("shipData", rawResponse, shipData)
     return rawResponse;
 }
 

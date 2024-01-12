@@ -9,6 +9,7 @@ import { useAccount, useBlockNumber } from "wagmi";
 import { useProvider, useSigner } from "@/app/utils/wagmi-utils";
 import axios from "axios";
 import toast from "react-hot-toast";
+import { postPilotShip } from "@/app/hooks/aiu/useAIU"
 
 
 
@@ -21,40 +22,31 @@ const InterGalaReportDisplay = (props: { playHolographicDisplay: () => void }) =
     const quipux = useQuipuxStore(state => state);
     const myPilots = store.myPilots;
     //const myShip = quipux.database?.ships[0];
-    const myShip = null
+    const myShip = quipux.shipData;
+    const provider = useProvider();
+    const easContractAddress = "0xA1207F3BBa224E2c9c3c6D5aF63D0eb1582Ce587";
+    const schemaUID = "0xb151d180b92e94a9c52dec14b1e93b975edaf696ea0927223d103845cfd2ca1b";
+    const eas = new EAS(easContractAddress);
 
+    const bn = app.blockNumber;
 
-    const { data: blockNumber, isError, isLoading } = useBlockNumber();
-
-    // Initialize the sdk with the address of the EAS Schema contract address
-
-    // Gets a default provider (in production use something else like infura/alchemy)
-    //eas.connect(provider);
-
-    // Initialize the sdk with the Provider
-
-    // ... [your state and function definitions] ...
     const { playHolographicDisplay } = props;
     const selectedTokenId = 2;
     const parsedMetadata = null;
-    const account = useAppStore(state => state.account);
+    const account = useAccount();
 
     const address = account?.address;
     const signer = useSigner();
     //const pilotData = { account, nickname, occupation, guild };
     //
-
-    const [answer, setAnswer] = useState("");
-    const [nickname, setNickname] = useState("");
-    const [occupation, setOccupation] = useState("");
-    const [guild, setGuild] = useState("");
-    const intakeForm = { account: account?.address, nickname, occupation, guild, answer };
-
     const [pilotIndex, setPilotIndex] = useState(0);
 
     const currentPilot = myPilots && myPilots[pilotIndex]
-    const handleSendMessage = async () => {
+
+    const handleSendMessage = async (data: any) => {
         playHolographicDisplay();
+        console.log("data", data);
+        let address = data.load.address;
         //setLoading(true);
         try {
             const response = await fetch("/api/newPilot", {
@@ -62,193 +54,54 @@ const InterGalaReportDisplay = (props: { playHolographicDisplay: () => void }) =
                 headers: {
                     "Content-Type": "application/json"
                 },
-                body: JSON.stringify(intakeForm),
+                body: JSON.stringify(data),
             });
-            const rawResponse = await response.json();
+            const rparse = await response.json();
+            const r = await JSON.parse(rparse.beacon);
 
 
-            const r = JSON.parse(rawResponse.report);
 
-            console.log("rawResponse", rawResponse, r);
-            quipux.setPilotData(r.pilotData)
-            quipux.setShipData(r.shipData)
-            quipux.setLocation(r.locationData);
-            quipux.routeLog.push(r.locationData);
+            console.log("rawResponse", r);
             let attest, shipPic
 
             try {
-                shipPic = await requestShip(r.shipData)
-
-                attest = await attestPilot(r.pilotData)
-                return attest;
+                shipPic = await requestShip(r.shipState)
+                imageStore.setImageUrl(shipPic.image)
+                quipux.setLocation(r.beaconData);
+                quipux.setPilotData(r.pilotState);
+                quipux.setShipData(r.shipState);
+                await postPilotShip(r.pilotState, r.shipState, r.beaconData, address);
+                //attest = await attestPilot(r.pilotData)
+                //return attest;
 
 
             } catch {
                 console.log("Error attesting pilot or ship")
 
-            } finally {
+            } finally {/*
                 if (attest && shipPic.image) {
                     let s: ShipState = r.shipData
                     let i: string = shipPic.image
-                    let k: Location = r.locationData
+                    let k: Location = r.beaconData
                     let ship = { state: s, image: i, location: k }
                     registerPilot(r.pilotData, attest, ship)
-                    imageStore.setDisplayImageUrl(shipPic.image)
-                    imageStore.setImageUrl(shipPic.image)
                     console.log("shipData", attest, shipPic)
                     toast.success("Pilot Attested");
                 }
                 else {
                     toast.error("Error attesting pilot or ship")
                 }
-            }
+           */ }
 
-            console.log("rawResponse", rawResponse, intakeForm, r);
+            console.log("rawResponse", r, quipux);
 
         } catch (error) {
             console.error("Error sending message:", error);
         }
     };
 
-    async function registerPilot(
-        pilotData: PilotState,
-        pilotAttestation: { updatedData: string, uid: string },
-        shipData: { state: ShipState, image: string }) {
-        // Save only if player id does not exist
-        console.log("pilotData", pilotData, pilotAttestation, shipData);
-
-        try {
-            await axios.post("http://0.0.0.0:3000/aiu/attest",
-                {
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: { pilotData, pilotAttestation, shipData, address }
-                })
-            toast.success("Pilot Attested")
-        } catch (error) {
-            console.error("Error sending message:", error);
-        }
-    }
-
-    const provider = useProvider();
-    const easContractAddress = "0xA1207F3BBa224E2c9c3c6D5aF63D0eb1582Ce587";
-    const schemaUID = "0xb151d180b92e94a9c52dec14b1e93b975edaf696ea0927223d103845cfd2ca1b";
-    const eas = new EAS(easContractAddress);
-    // Signer must be an ethers-like signer.
 
 
-
-
-    const attestPilot = async (pilot: PilotState) => {
-
-
-        if (!provider || !signer) return;
-        eas.connect(provider);
-        const offchain = await eas.getOffchain();
-
-        //
-
-        // Initialize SchemaEncoder with the schema string
-        const pilotSchemaUID = "0xb151d180b92e94a9c52dec14b1e93b975edaf696ea0927223d103845cfd2ca1b";
-        const pilotSchemaEncoder = new SchemaEncoder("string pilotName,string pilotDescription,address alignment,uint64 credits,uint64[] location");
-        const pilotEncodedData = pilotSchemaEncoder.encodeData([
-            { name: "pilotName", value: "", type: "string" },
-            { name: "pilotDescription", value: "", type: "string" },
-            { name: "alignment", value: "0x0000000000000000000000000000000000000000", type: "address" },
-            { name: "credits", value: BigInt(0), type: "uint64" },
-            {
-                name: "location", value: [BigInt(0),
-                BigInt(0), BigInt(0)], type: "uint64[]"
-            },
-        ]);
-
-
-
-        const offchainAttestation = await offchain.signOffchainAttestation(
-            {
-                version: 1,
-                recipient: address ? address : "0x0000000000000000",
-                expirationTime: BigInt(0),
-                time: blockNumber ? blockNumber : BigInt(0),
-                revocable: true,
-                refUID: "0x0000000000000000000000000000000000000000000000000000000000000000",
-                // Be aware that if your schema is not revocable, this MUST be false
-                schema: pilotSchemaUID,
-                data: pilotEncodedData,
-            },
-            signer,
-        )
-
-
-
-
-
-        const updatedData = JSON.stringify(
-            offchainAttestation,
-            (key, value) => (typeof value === "bigint" ? value.toString() : value), // return everything else unchanged
-        );
-
-        const uid = offchainAttestation.uid;
-
-
-        return { updatedData, uid }
-    }
-
-    const attestShip = async (pilot: ShipState) => {
-
-
-        if (!provider || !signer) return;
-        eas.connect(provider);
-        const offchain = await eas.getOffchain();
-
-        //
-
-        // Initialize SchemaEncoder with the schema string
-        const pilotSchemaUID = "0xb151d180b92e94a9c52dec14b1e93b975edaf696ea0927223d103845cfd2ca1b";
-        const pilotSchemaEncoder = new SchemaEncoder("string pilotName,string pilotDescription,address alignment,uint64 credits,uint64[] location");
-        const pilotEncodedData = pilotSchemaEncoder.encodeData([
-            { name: "pilotName", value: "", type: "string" },
-            { name: "pilotDescription", value: "", type: "string" },
-            { name: "alignment", value: "0x0000000000000000000000000000000000000000", type: "address" },
-            { name: "credits", value: BigInt(0), type: "uint64" },
-            {
-                name: "location", value: [BigInt(0),
-                BigInt(0), BigInt(0)], type: "uint64[]"
-            },
-        ]);
-
-
-
-        const offchainAttestation = await offchain.signOffchainAttestation(
-            {
-                version: 1,
-                recipient: address ? address : "0x0000000000000000",
-                expirationTime: BigInt(0),
-                time: blockNumber ? blockNumber : BigInt(0),
-                revocable: true,
-                refUID: "0x0000000000000000000000000000000000000000000000000000000000000000",
-                // Be aware that if your schema is not revocable, this MUST be false
-                schema: pilotSchemaUID,
-                data: pilotEncodedData,
-            },
-            signer,
-        )
-
-
-
-
-
-        const updatedData = JSON.stringify(
-            offchainAttestation,
-            (key, value) => (typeof value === "bigint" ? value.toString() : value), // return everything else unchanged
-        );
-
-        const uid = offchainAttestation.uid;
-
-
-        // registerShip(pilot, updatedData, uid)
-    }
 
 
     const requestShip = async (shipData: ShipState) => {
@@ -269,31 +122,6 @@ const InterGalaReportDisplay = (props: { playHolographicDisplay: () => void }) =
         return rawResponse;
     }
 
-    const generateShip = async (pilotData: ShipState) => {
-        const response = await fetch("/api/newShip", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(pilotData),
-        });
-
-        const rawResponse = await response.json();
-        console.log("ShipRaw", rawResponse);
-
-        const r = JSON.parse(rawResponse.pilotData);
-
-        quipux.setShipData(r.shipData)
-        try {
-            requestShip(r.shipData)
-            attestShip(r.shipData)
-        }
-        catch {
-            console.log("Error setting ship data")
-
-        }
-    }
-
     const playerSelector = () => {
         if (pilotIndex < myPilots.length - 1) {
             setPilotIndex(pilotIndex + 1)
@@ -305,10 +133,45 @@ const InterGalaReportDisplay = (props: { playHolographicDisplay: () => void }) =
 
         console.log(store, myPilots)
     }
-    const dataClass = ["playerData", "shipData", "SwitchBoard"];
 
+    const dataClass = ["playerData", "shipData", "SwitchBoard", "newData", "inputData"];
+
+    function MyForm() {
+        const handleSubmit = async (event: any) => {
+            event.preventDefault();
+
+            const data = new FormData(event.currentTarget);
+            const values = Object.fromEntries(data.entries());
+            playHolographicDisplay();
+            if (!Number(values.age)) {
+                alert('Your age must be a number');
+                return;
+            }
+
+            let load = { values, bn, address }
+            const message = await handleSendMessage({ load });
+
+            console.log('submitting', load, values, message);
+        };
+
+        return (
+            <form onSubmit={handleSubmit}>
+                <p>Enter your name:</p>
+                <input type="text" name="username" />
+
+                <p>Enter your age:</p>
+                <input type="text" name="age" />
+
+                <p>What is the meaning of life?:</p>
+                <input type="text" name="meaningoflife" />
+
+                <br /><br />
+                <input className="cursor-pointer hex-prompt" type="submit" />
+            </form>
+        );
+    }
     const renderCustomInterface = () => {
-        switch ("inputData") {
+        switch (dataClass[3]) {
             case "inputData":
                 // Custom interface for image data ff
                 return (
@@ -348,9 +211,6 @@ const InterGalaReportDisplay = (props: { playHolographicDisplay: () => void }) =
 
                     </>
                 );
-            case "logData":
-                // Custom interface for interplanetary status report
-                return <IntergalacticReportDisplay playHolographicDisplay={playHolographicDisplay} />;
             case "SwitchBoard":
                 // Custom interface for meta scan data
                 return (
@@ -360,9 +220,9 @@ const InterGalaReportDisplay = (props: { playHolographicDisplay: () => void }) =
 
                         <li className="text-white">SHIP DATA:</li>
 
-                        <strong className="text-white text-md"> ID:{myShip && myShip.shipData.shipName}<br /></strong>
+                        <strong className="text-white text-md"> ID:{myShip && myShip.shipName}<br /></strong>
 
-                        STATS{myShip.shipData.stats && Object.entries(myShip.shipData?.stats).map(([key, value], index) => (
+                        STATS{myShip.stats && Object.entries(myShip?.stats).map(([key, value], index) => (
                             <li key={key} className="text-bold">{key}:<span className="text-white">{JSON.stringify(value)}</span>
                             </li>
                         ))}
@@ -381,78 +241,10 @@ const InterGalaReportDisplay = (props: { playHolographicDisplay: () => void }) =
                 // Custom interface for ship state
                 return (
                     <>
-                        <ul className="space-y-2 p-1"
+                        <ul className="space-y-2 space-x-2 p-6"
 
                         >
-                            <span className="relative  text-yellow-600 pointer-events-auto cursor-pointer"> AIU-001
-                                <br /> <span className="text-lg font-bold text-left">
-                                    CMDR:
-                                    <span className="text-2xl text-white"> {account?.displayName}</span>{" "}
-                                </span>{" "}
-                            </span><br />
-
-                            <form className="relative text-white text-sm font-bold text-center"
-                                onSubmit={e => {
-                                    e.preventDefault();
-                                    playHolographicDisplay()
-                                }}
-                            >
-
-                                <label>
-                                    Nickname
-                                    <input className="hex-prompt ml-3 m-1"
-                                        defaultValue={account?.displayName}
-                                        value={nickname}
-                                        onChange={e => {
-                                            playHolographicDisplay();
-                                            setNickname(e.target.value);
-                                        }}
-                                    />
-                                </label>
-                                <br />
-                                <label>
-                                    Ocupation
-                                    <input className="hex-prompt ml-1 m-1"
-                                        value={occupation}
-                                        onChange={e => {
-                                            playHolographicDisplay();
-                                            setOccupation(e.target.value)
-                                        }}
-                                    />
-                                </label>
-                                <br />
-                                <label>
-                                    Guild
-                                    <input className="hex-prompt ml-12 m-1"
-                                        value={guild}
-                                        onChange={e => {
-                                            playHolographicDisplay();
-                                            setGuild(e.target.value)
-                                        }}
-
-                                    />
-                                </label><br />
-                                <span className="text-white">What is the meaning of life?</span><br />
-                                <label>
-                                    Answer
-                                    <input className="hex-prompt ml-10 m-1"
-
-
-                                        onChange={e => {
-                                            playHolographicDisplay();
-                                            setAnswer(e.target.value)
-                                        }}
-                                    />
-                                </label><br />
-                                <button
-                                    className="spaceship-display-screen hex-prompt mt-5 p-2"
-
-
-                                    onClick={(e) => { handleSendMessage() }}
-                                >submit
-                                </button>
-
-                            </form >
+                            <MyForm />
                         </ul>
                     </>);
             default:
@@ -485,21 +277,21 @@ const InterGalaReportDisplay = (props: { playHolographicDisplay: () => void }) =
             />
             <div className="relative top-[10%] overflow-auto w-full h-[90%]">
 
-                <div className="overflow-auto relative flex flex-row text-sm text-left spaceship-display-screen p-2 pl-2 ml-2 mt-1 space-y-1"
+                <div className="relative flex flex-col text-sm text-left spaceship-display-screen pl-2 ml-2 mt-1 space-y-1"
 
                     style={{ width: "46%", height: "56%" }}>
                     <CustomInterface />
                 </div>
 
-                <img className="absolute top-[5%] right-6 h-[48%] w-[45%] p-2 hex-prompt" src={imageStore.displayImageUrl} />
+                <img className="absolute top-[5%] right-6 h-[48%] w-[45%] p-2 hex-prompt" src={imageStore.imageUrl} />
                 <div className="text-sm flex flex-wrap spaceship-display-screen absolute top-[59%] -left-1 p-4 overflow-auto"
 
                     style={{ width: "100%", height: "25%" }}>
                     CARGO:
-                    {myShip?.shipData.cargo && Object.entries(myShip.shipData.cargo).map((cargo: any, index: number) => (
+                    {myShip?.cargo && Object.entries(myShip.cargo).map((cargo: any, index: number) => (
                         <li key={cargo} className="text-bold">{JSON.stringify(cargo)}:<span className="text-white"></span></li>))}
 
-                    <li>STATUS: {myShip?.shipData.currentStatus}</li>
+                    <li>STATUS: {myShip?.currentStatus}</li>
 
                     <div className="text-white">LOCATION:
                         <ul>
@@ -520,7 +312,7 @@ const InterGalaReportDisplay = (props: { playHolographicDisplay: () => void }) =
 
                     </div>
 
-                    <li>FunFact:{myShip?.shipData.funFact}</li>
+                    <li>FunFact:{myShip?.funFact}</li>
                 </div>
 
                 <br />

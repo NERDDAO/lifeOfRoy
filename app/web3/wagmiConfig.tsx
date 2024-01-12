@@ -1,4 +1,3 @@
-"use client"
 import { createConfig } from "wagmi";
 import { appChains, wagmiConnectors } from "@/app/web3/wagmiConnectors";
 

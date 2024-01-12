@@ -16,8 +16,7 @@ const Dashboard: React.FC<DashboardProps> = ({
             <div className="dashboard">
                 <Image className="staticOverlay w-full h-full" src="/assets/view.png" alt="Static Image Overlay" fill />
 
-                <Background
-                ></Background>
+                <Background />
 
                 {children}
             </div>

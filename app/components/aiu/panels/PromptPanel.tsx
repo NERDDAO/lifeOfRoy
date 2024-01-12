@@ -1,41 +1,11 @@
 import React, { useState } from "react";
 import Switchboard from "./Switchboard";
 import type { ApiResponses } from "@/app/types/appTypes";
-import { useAppStore, useGlobalState, useImageStore, useQuipuxStore } from "@/app/store/store";
+import { useAppStore, useGlobalState, useImageStore, useQuipuxStore, useSoundController } from "@/app/store/store";
 
-interface PromptPanelProps {
-    playHolographicDisplay: () => void;
-    scanning: boolean;
-    handleEngaged: (engaged: boolean) => void;
-    travelStatus: string | undefined;
-    warping: boolean;
-    engaged: boolean;
-    setModifiedPrompt: (modifiedPrompt: string) => void;
-    description: string;
-    buttonMessageId: string | "";
-    imageUrl: string;
-    srcUrl: string;
-    loading: boolean;
-    metadata: ApiResponses;
-    onSubmitPrompt: (type: "character" | "background") => Promise<void>;
-    onSubmit: (type: "character" | "background") => Promise<void>;
-    handleButtonClick: (button: string, type: "character" | "background") => void;
-    //Type '(type: "character" | "background", srcURL: string | undefined, level: string, power1: string, power2: string, power3: string, power4: string, alignment1: string, alignment2: string, selectedDescription: string, nijiFlag: boolean, vFlag: boolean, side: string) => string' is not assignable to type '() => void'.
-}
 
-export const PromptPanel: React.FC<PromptPanelProps> = ({
-    description,
-    playHolographicDisplay,
-    handleEngaged,
-    travelStatus,
-    warping,
-    scanning,
-    engaged,
-    setModifiedPrompt,
-    imageUrl,
-    srcUrl,
-    metadata,
-}) => {
+
+export const PromptPanel: React.FC = () => {
     const attributes = [
         "srcUrl",
         "Level",
@@ -58,10 +28,27 @@ export const PromptPanel: React.FC<PromptPanelProps> = ({
     const [isFocused, setIsFocused] = useState(false);
     const [selectedAttributes, setSelectedAttributes] = useState<string[]>([]);
     const imageStore = useImageStore();
-    function handleModifiedPrompt(modifiedPrompt: string) {
-        //Do something with the modifiedPrompt, e.g., update the state or perform other actions
-        setModifiedPrompt(modifiedPrompt);
-        console.log(modifiedPrompt);
+
+    const sounds = useSoundController(state => state.sounds);
+    const state = useGlobalState(state => state);
+    const audioController = sounds.audioController;
+
+    function playSpaceshipOn() {
+        if (sounds.spaceshipOn) {
+            audioController?.playSound(sounds.spaceshipOn, true, 0.02);
+        }
+    }
+
+    function playHolographicDisplay() {
+        if (sounds.holographicDisplay) {
+            audioController?.playSound(sounds.holographicDisplay, false, 1);
+        }
+    }
+
+    function playWarpSpeed() {
+        if (sounds.warpSpeed) {
+            audioController?.playSound(sounds.warpSpeed, false, 1.1);
+        }
     }
 
     const handleClick = () => {
@@ -86,8 +73,8 @@ export const PromptPanel: React.FC<PromptPanelProps> = ({
                             <p className="font-bold text-2xl">
 
                                 VIEWFINDER<br />
-                                {metadata.nftData.Level} {metadata.nftData.Power1} {metadata.nftData.Power2} {metadata.nftData.Power3}
-                                {metadata.nftData.Power4}{" "}
+                                {state.nftData.capName}
+
                             </p>
                         </h1>
 
@@ -140,3 +127,5 @@ function stringToHex(str: string): string {
     }
     return hex;
 }
+
+
