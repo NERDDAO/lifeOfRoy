@@ -13,7 +13,7 @@ import { useBlockNumber, useAccount, usePublicClient, useContractRead } from "wa
 import { useContractEvent, erc721ABI } from 'wagmi'
 import toast from "react-hot-toast";
 import { useHeroCodex } from "@/app/hooks/aiu/useAIU"
-import { HeroCodex, Manifest, ProgressResponseType, ShipState } from "./types/appTypes";
+import { Universe } from "./types/appTypes";
 import { EAS, SchemaEncoder, Offchain } from "@ethereum-attestation-service/eas-sdk";
 import { useProvider, useSigner } from "./utils/wagmi-utils";
 import { useBotStore } from "./store/bot";
@@ -37,29 +37,9 @@ export default function App() {
     const account = useAccount();
     const signer = useSigner();
 
-    useEffect(() => {
-        quipux.setCredentials({ provider, signer, account });
-        console.log("credentials", quipux.credentials);
-    }, [account.address]);
-
-    const [soundsLoaded, setSoundsLoaded] = useState<boolean>(false);
-
-    const setSounds = useSoundController((state) => state.setSounds);
-    const sounds = useSoundController((state) => state.sounds);
-
-    const useGetPilot = () => {
-        if (!account.address) return console.log("no account address");
-        const pilots = quipux.database.database?.pilots
-        const myPilot = pilots?.filter((pilot: { address: string; }) => pilot.address === account.address)
-        if (!myPilot) return console.log("no myPilot");
-        quipux.setPilotData(myPilot[myPilot.length - 1]?.load?.pilotState);
-        quipux.setShipData(myPilot[0].load?.shipData);
-        quipux.setLocation(myPilot[myPilot.length - 1].load?.beaconData);
-
-        console.log("myPilot", myPilot, quipux)
-    }
     const AIU = '0xd74c4701cc887ab8b6b5302ce4868c4fbc23de75'
     const publicClient = usePublicClient()
+
     const fetchIds = async () => {
         const userNFTs = await publicClient.getContractEvents({
             address: AIU,
@@ -90,10 +70,51 @@ export default function App() {
         args: [account.address ? account.address : "0x00000000"],
     })
 
+    useEffect(() => {
+        quipux.setCredentials({ provider, signer, account });
+        console.log("credentials", quipux.credentials);
+    }, [account.address]);
+
+    const [soundsLoaded, setSoundsLoaded] = useState<boolean>(false);
+
+    const setSounds = useSoundController((state) => state.setSounds);
+    const sounds = useSoundController((state) => state.sounds);
+    const loadSounds = async () => {
+
+        const audioController = new AudioController();
+        const spaceshipOn = await audioController?.loadSound("/audio/spaceship-on.wav");
+        const spaceshipHum = await audioController?.loadSound("/audio/spaceship-hum.wav");
+        const holographicDisplay = await audioController?.loadSound("/audio/holographic-display.wav");
+        const warpSpeed = await audioController?.loadSound("/audio/warp-speed.wav");
+        setSounds({
+            spaceshipOn,
+            spaceshipHum,
+            holographicDisplay,
+            warpSpeed,
+            audioController
+        });
+
+        setSoundsLoaded(true);
+
+        console.log("sounds loaded", sounds)
+    };
 
     useEffect(() => {
         loadSounds();
     }, [])
+
+
+    const useGetPilot = () => {
+        if (!account.address) return console.log("no account address");
+        const pilots = quipux.database?.players
+        const myPilot = pilots?.filter((pilot: { accountId: string; }) => pilot.accountId === account.address)
+        if (!myPilot) return toast.error("no myPilot");
+        quipux.setMetaScanData(myPilot[myPilot.length - 1]);
+        quipux.setPilotData(myPilot[myPilot.length - 1]?.pilotState);
+        console.log("myPilot", myPilot, quipux.metaScanData)
+    }
+
+
 
     useEffect(() => {
         if (balance.data && balance.data > 0) {
@@ -110,14 +131,12 @@ export default function App() {
             app.setTokenURI(uri.data);
             app.setBlockNumber(String(blockNumber));
             useFetchNFT(uri.data)
-
-
             console.log("URI", uri, balance.data, blockNumber)
         }
     }, [uri.data])
 
 
-    const manifest: Manifest = {
+    const manifest = {
         uid: "",
         action: state.modifiedPrompt,
         heroId: state.selectedTokenId,
@@ -125,7 +144,7 @@ export default function App() {
         nonce: 0,
         blockNumber: String(blockNumber) || "0",
         pilotState: quipux.pilotData,
-        shipData: quipux.shipData,
+        shipData: quipux.metaScanData.shipState,
         currentLocation: quipux.location,
         prevManifestId: "",
     }
@@ -218,7 +237,7 @@ export default function App() {
     const postQuipux = async (r: any, uid: string) => {
 
         try {
-            const newManifest: Manifest = {
+            const newManifest = {
                 uid: uid,
                 action: manifest.action,
                 heroId: manifest.heroId,
@@ -267,7 +286,7 @@ export default function App() {
             const uid = await attestQuipux()
             const r = await handleSendMessage()
             quipux.setPilotData(r.stateUpdate.pilotState);
-            quipux.setShipData(r.stateUpdate.shipData);
+            quipux.setMetaScanData(r.stateUpdate.shipData);
             quipux.setLocation(r.stateUpdate.currentLocation);
             quipux.routeLog.push(r.stateUpdate.currentLocation);
             quipux.story.push(r.narrativeUpdate);
@@ -310,8 +329,8 @@ export default function App() {
 
 
     const useFetchNFT = async (data: string) => {
-        const hCodex = quipux.database?.database?.heroCodexes
-        const sCodex = await hCodex?.filter((codex: { _id: number; }) => codex._id === Number(state.selectedTokenId))
+        const hCodex = quipux.database?.quests
+        const sCodex = hCodex?.filter((codex: { issuerId: string; }) => codex?.issuerId ? codex.issuerId === `AIU${state.selectedTokenId}` : "")
         if (!data) return console.log("no uri data");
         const response = await fetch(data);
         const metadata = await response.json();
@@ -347,15 +366,16 @@ export default function App() {
 
         let codex
         console.log(sCodex, "sCodex")
-        if (sCodex && !sCodex[0]) {
-            codex = await useHeroCodex(nftQuery, String(blockNumber));
-            image.setDisplayImageUrl(codex.ship.image)
+        if (sCodex && sCodex[0]) {
+            codex = sCodex[0]
+            console.log("codexFound!", codex);
         }
         else {
-            codex = sCodex[0]
-            image.setDisplayImageUrl(codex.Attestation.imageUrl)
+
+            codex = await useHeroCodex(nftQuery, String(blockNumber));
+            image.setDisplayImageUrl(codex.ship.image)
+            console.log("GenerateCodex", codex);
         }
-        console.log("codex", codex);
 
         toast.success(`
                 INCOMING TRANSMISSION\n
@@ -371,36 +391,13 @@ export default function App() {
             console.log("No address or deployed contract");
             return;
         }
-
         try {
-
             const ownedTokenIds = userNFTs.map((event: { args: { tokenId: { toString: () => any; }; }; }) => event.args.tokenId.toString());
-
             state.setTokenIds(ownedTokenIds)
             console.log("tokenIds", ownedTokenIds, userNFTs.length, "userBalance");
         } catch (error) {
             console.error("Error in fetchTokenIds:", error);
         }
-    };
-
-    const loadSounds = async () => {
-
-        const audioController = new AudioController();
-        const spaceshipOn = await audioController?.loadSound("/audio/spaceship-on.wav");
-        const spaceshipHum = await audioController?.loadSound("/audio/spaceship-hum.wav");
-        const holographicDisplay = await audioController?.loadSound("/audio/holographic-display.wav");
-        const warpSpeed = await audioController?.loadSound("/audio/warp-speed.wav");
-        setSounds({
-            spaceshipOn,
-            spaceshipHum,
-            holographicDisplay,
-            warpSpeed,
-            audioController
-        });
-
-        setSoundsLoaded(true);
-
-        console.log("sounds loaded", sounds)
     };
 
 

@@ -2,24 +2,17 @@ import { create } from "zustand";
 import scaffoldConfig from "@/app/scaffold.config";
 import type {
     AIUBroadcast,
-    EncounterData,
-    ApiResponses,
-    ChatData,
-    EncounterResultData,
-    QuestData,
-    Manifest,
+    Encounter,
+    Universe,
+    Planet,
+    Quest,
     Item,
     Sounds,
-    HeroCodex,
+    PlayerState,
     MidjourneyConfig,
     NftData,
     PilotState,
-    PlanetData,
     Quipux,
-    Response,
-    ShipState,
-    AIUDatabase,
-    Location,
 } from "@/app/types/appTypes";
 import { TChainAttributes as ChainWithAttributes } from "@/app/utils/scaffold-eth";
 import { EAS, SchemaEncoder } from "@ethereum-attestation-service/eas-sdk";
@@ -80,26 +73,17 @@ export type QuipuxStore = {
     setLocation: (location: Location) => void;
     routeLog: Location[];
     setRouteLog: (routeLog: Location) => void;
-    shipData: ShipState;
-    setShipData: (shipData: ShipState) => void;
     quipuxId: string;
     pilotData: PilotState;
     setPilotData: (pilotData: PilotState) => void;
-    questData: QuestData;
-    setQuestData: (questData: QuestData) => void;
-    planetData: PlanetData;
-    setPlanetData: (planetsData: PlanetData) => void;
-    encounterResults: EncounterResultData[];
+    planetData: Planet[];
+    setPlanetData: (planetsData: Planet[]) => void;
     quipux: Quipux
     setQuipux: (quipux: Quipux) => void;
-    database: any;
-    setDatabase: (newDatabase: AIUDatabase) => void;
-    encounterData: EncounterData;
-    setEncounterData: (encounterData: EncounterData) => void;
-    manifest: Manifest;
-    setManifest: (manifest: Manifest) => void;
-    metaScanData: HeroCodex;
-    setMetaScanData: (metaScanData: HeroCodex) => void;
+    database: Universe;
+    setDatabase: (newDatabase: Universe) => void;
+    metaScanData: PlayerState;
+    setMetaScanData: (metaScanData: PlayerState) => void;
     aiuBroadcast: AIUBroadcast;
     setAiuBroadcast: (aiuBroadcast: AIUBroadcast) => void;
 };
@@ -109,34 +93,23 @@ export const useQuipuxStore = create<QuipuxStore>(set => ({
     setStory: (story: string[]) => set(() => ({ story: story })),
     aiuBroadcast: {} as AIUBroadcast,
     setAiuBroadcast: (aiuBroadcast: AIUBroadcast) => set(() => ({ aiuBroadcast: aiuBroadcast })),
-    manifest: {} as Manifest,
-    metaScanData: {} as HeroCodex,
-    setMetaScanData: (metaScanData: HeroCodex) => set(() => ({ metaScanData: metaScanData })),
-    setManifest: (manifest: Manifest) => set(() => ({ manifest: manifest })),
+    metaScanData: {} as PlayerState,
+    setMetaScanData: (metaScanData: PlayerState) => set(() => ({ metaScanData: metaScanData })),
     credentials: { account: {} as any, provider: {} as any, signer: {} as any },
     setCredentials: (credentials: any) => set({ credentials }),
     eas: {},
     setEas: (eas: any) => set({ eas }),
-    encounterData: {} as EncounterData,
-    setEncounterData: (encounterData: EncounterData) => set(() => ({ encounterData: encounterData })),
     location: {} as Location,
     setLocation: (location: Location) => set(() => ({ location: location })),
     routeLog: [] as Location[],
     setRouteLog: (newLocation: Location) => set(state => ({ routeLog: { ...state.routeLog, newLocation } })),
-    shipData: {} as ShipState,
-    setShipData: (shipData: ShipState) => set(() => ({ shipData: shipData })),
-    database: {} as AIUDatabase,
-    setDatabase: (newDatabase: any) => set(() => ({ database: newDatabase })),
+    database: {} as Universe,
+    setDatabase: (newDatabase: Universe) => set(() => ({ database: newDatabase })),
     quipuxId: "",
     pilotData: {} as PilotState,
     setPilotData: (pilotData: PilotState) => set(() => ({ pilotData: pilotData })),
-    questData: {} as QuestData,
-    setQuestData: (questData: QuestData) =>
-        set(() => ({ questData: questData })),
-    planetData: {} as PlanetData,
-    setPlanetData: (planetData: PlanetData) => set(() => ({ planetData: planetData })),
-    encounterResults: [] as EncounterResultData[],
-    setEncounterResults: (encounterResults: EncounterResultData[]) => set(() => ({ encounterResults: encounterResults })),
+    planetData: {} as Planet[],
+    setPlanetData: (planetData: Planet[]) => set(() => ({ planetData: planetData })),
     quipux: {} as Quipux,
     setQuipux: (quipux: Quipux) => set(() => ({ quipux: quipux })),
 }));
@@ -279,8 +252,8 @@ export type GlobalState = {
     setOriginatingMessageId: (originatingMessageId: string) => void;
     intakeForm: any;
     setIntakeForm: (intakeForm: any) => void;
-    chatData: Partial<ChatData>;
-    setChatData: (chatState: Partial<ChatData>) => void;
+    chatData: Partial<string[]>;
+    setChatData: (chatState: Partial<string[]>) => void;
     tokenIds: string[];
     setTokenIds: (tokenIds: string[]) => void;
     nativeCurrencyPrice: number;
@@ -293,10 +266,6 @@ export type GlobalState = {
     setNftData: (newNftData: NftData) => void;
     midjourneyConfig: MidjourneyConfig;
     setMidjourneyConfig: (newMidjourneyConfig: Partial<MidjourneyConfig>) => void;
-    travels: Partial<ApiResponses>[];
-    setTravels: (newTravel: any) => void;
-    apiResponses: ApiResponses;
-    setApiResponses: (response: Partial<ApiResponses>) => void;
     setEngaged: (engaged: boolean) => void;
     engaged: boolean;
     myPilots: any;
@@ -325,8 +294,8 @@ export const useGlobalState = create<GlobalState>(set => ({
     setSelectedTokenId: (selectedTokenId: string) => set({ selectedTokenId }),
     buttonMessageId: "",
     setButtonMessageId: (buttonMessageId: string) => set({ buttonMessageId }),
-    chatData: { naviMessages: [] } as Partial<ChatData>,
-    setChatData: (chatData: Partial<ChatData>) => set(state => ({ chatData: { ...state.chatData, ...chatData } })),
+    chatData: [],
+    setChatData: (chatData: Partial<string[]>) => set(state => ({ chatData: { ...state.chatData, ...chatData } })),
     engaged: false,
     setEngaged: (engaged: boolean) => set({ engaged }),
     tokenIds: [],
@@ -342,11 +311,6 @@ export const useGlobalState = create<GlobalState>(set => ({
         set(state => ({ midjourneyConfig: { ...state.midjourneyConfig, ...midjourneyConfig } })),
     ethPrice: 0,
     setEthPrice: (newValue: number): void => set(() => ({ ethPrice: newValue })),
-    travels: [],
-    setTravels: (newTravel: Partial<ApiResponses>) => set(state => ({ travels: [...state.travels, newTravel] })),
-    apiResponses: {} as ApiResponses,
-    setApiResponses: (response: Partial<ApiResponses>) =>
-        set(state => ({ apiResponses: { ...state.apiResponses, ...response } })),
-    intakeForm: {} as any,
+    traveorm: {} as any,
     setIntakeForm: (intakeForm: any) => set(() => ({ intakeForm: intakeForm })),
 }));

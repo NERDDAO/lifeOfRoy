@@ -50,9 +50,10 @@ export const useHeroCodex = async (nftData: NftData, blockNumber: string) => {
             body: JSON.stringify({ load }),
         });
     r = await response.json();
-    const parsed = JSON.parse(r.beacon)
-    console.log("rawResponse", r.beacon, parsed);
-    ship = await attestShip(r.beacon);
+
+    console.log("rawResponse", r);
+    const parsed = JSON.parse(r)
+    ship = await attestShip(r);
     parsed.imageUrl = ship.image;
     postCodex(parsed);
 

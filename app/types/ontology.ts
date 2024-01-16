@@ -1,56 +1,5 @@
-import AudioController from "../components/aiu/AudioController";
-// appTypes 
-//
-export type MidjourneyConfig = {
-    nijiFlag: boolean;
-    vFlag: boolean;
-    selectedDescription: string;
-    url: string;
-};
-
-export type IntakeForm = {
-    account: string;
-    nickname: string;
-    occupation: string;
-    guild: string;
-};
-
-export type Response = {
-    accountId: string;
-    createdAt: string;
-    originatingMessageId: string;
-    ref: string;
-    buttons: ["U1", "U2", "U3", "U4", "🔄", "V1", "V2", "V3", "V4"];
-    imageUrl: string;
-    imageUrls: string[];
-};
-
-
-export type Sounds = {
-    spaceshipHum?: AudioBuffer | null;
-    spaceshipOn?: AudioBuffer | null;
-    holographicDisplay?: AudioBuffer | null;
-    warpSpeed?: AudioBuffer | null;
-    audioController: AudioController | null;
-};
-
-export type NftData = {
-    nftId: string;
-    capName: string;
-    Level: string;
-    Power1: string;
-    Power2: string;
-    Power3: string;
-    Power4: string;
-    Alignment1: string;
-    Alignment2: string;
-    Side: string;
-};
-
-// game ontology
 
 export type Universe = {
-    _id: string;
     planets: Planet[];
     players: PlayerState[];
     quests: Quest[];
@@ -105,8 +54,7 @@ export type Encounter = {
 export type AIUBroadcast = {
     broadcastId: string;
     message: string;
-    timestamp: number;
-    quipex: Quipux[]// Unix timestamp
+    timestamp: number; // Unix timestamp
 };
 
 export type Participant = {
@@ -164,7 +112,7 @@ export type Cargo = {
     supplies: number;
 };
 
-export type Quipux = {
+export type StateChange = {
     affectedEntityId: string;
     newState: any;
 };

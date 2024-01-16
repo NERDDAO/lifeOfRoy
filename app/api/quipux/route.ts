@@ -1,13 +1,46 @@
-
 import OpenAI from "openai";
-import type { Manifest } from "@/app/types/appTypes";
+import type { NftData, PilotState, ShipState, Location, PlayerState } from "@/app/types/appTypes";
+import { MongoDBAtlasVectorSearch, VectorStoreIndex, storageContextFromDefaults, Document } from "llamaindex";
+import { MongoClient } from "mongodb";
 import { NextResponse } from "next/server";
+
+const url = process.env.MONGODB_URL || 'mongodb+srv://At0x:r8MzJR2r4A1xlMOA@cluster1.upfglfg.mongodb.net/?retryWrites=true&w=majority'
+
+const client = new MongoClient(url);
+await client.connect();
+// Database Name
+
+async function llamaindex(payload: string, id: string) {
+    const vectorStore = new MongoDBAtlasVectorSearch({
+        mongodbClient: client,
+        dbName: "aiUniverse",
+        collectionName: "naviIndex", // this is where your embeddings will be stored
+        indexName: "Navi", // this is the name of the index you will need to create
+    });
+
+    // now create an index from all the Documents and store them in Atlas
+    const storageContext = await storageContextFromDefaults({ vectorStore });
+
+    const essay = payload;
+
+
+    // Create Document object with essay
+    const document = new Document({ text: essay, id_: id });
+
+    // Split text and create embeddings. Store them in a VectorStoreIndex
+    await VectorStoreIndex.fromDocuments([document], { storageContext });
+    console.log(
+        `Successfully created embeddings in the MongoDB collection`,
+    );
+}
+
+
 
 const openai = new OpenAI({
     apiKey: process.env.OPENAI_AUTH_TOKEN,
 });
 
-async function generateScannerOutput(manifest: Manifest, msgs: any) {
+async function generateScannerOutput(manifest: PlayerState, msgs: any) {
     const messages: any[] = [
         {
             role: "system",
@@ -34,7 +67,7 @@ The action is what the player wants to do. you must determine wether the action 
             role: "assistant",
             content: `
 
-   ACTION: ${manifest.action}
+   ACTION: ${manifest}
 
 Describe the view from the spaceship cockpit in the spaceDescription field.
  Types:           

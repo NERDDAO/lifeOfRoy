@@ -8,7 +8,7 @@ import { BlockieAvatar } from "./scaffold-eth";
 import { wagmiConfig } from "@/app/web3/wagmiConfig";
 import { appChains } from "@/app/web3/wagmiConnectors";
 import AudioController from "./aiu/AudioController";
-import { Sounds } from "../types/appTypes";
+import { Sounds, Universe } from "../types/appTypes";
 import { QueryClient, QueryClientProvider } from "react-query";
 import { useMobileScreen } from "../utils/mobile";
 import dynamic from "next/dynamic";
@@ -26,10 +26,7 @@ import { LoadingPage } from "@/app/components/ui/loading";
 import TargetDataDisplay from "./aiu/panels/TargetDataDisplay";
 import { useQuipuxStore, useAppStore, useSoundController } from "@/app/store/store";
 import { EAS } from "@ethereum-attestation-service/eas-sdk";
-
-import { parseAbiItem } from 'viem'
-import { Header } from "./Header";
-import { useDeployedContractInfo, useScaffoldEventHistory } from "../hooks/aiu/scaffold-eth";
+// Get all players from collection
 
 export const SettingsPage = dynamic(
     async () => (await import("./settings")).Settings,
@@ -180,28 +177,29 @@ export const AppComponent = ({ children }: { children: React.ReactNode }) => {
     const fetchDb = async () => {
 
 
+        // Database Name
+        // Use connect method to connect to the server
+
         // Initialize the sdk with the address of the EAS Schema contract address
         quipux.setEas(eas);
 
         try {
-            const response = await fetch("http://0.0.0.0:3000/aiu/database"); // assume the same host
+            const response = await fetch("/api/mongo"); // assume the same host
             ;
-            const json = await response.json();
-            console.log(json, "Player data from DB");
-            quipux.setDatabase(json)
+            let aiu = await response.json();
+            quipux.setDatabase(aiu[0] as Universe)
+            console.log(aiu[0], "AIU")
 
         } catch (e: any) {
-            console.log(e.message);
+            console.log(e.message, "Error fetching player data from DB")
 
 
         }
     };
 
-
-
-
     useEffect(() => {
         fetchDb();
+        console.log("quipux", quipux)
     }, []);
 
     if (!useHasHydrated()) {
