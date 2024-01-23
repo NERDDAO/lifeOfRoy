@@ -5,7 +5,7 @@ import { ModelType } from "@/app/client/platforms/llm";
 import { createEmptySession } from "../store";
 import { useQuipuxStore } from "@/app/store/store"
 
-const quipuxStore = useQuipuxStore.getState();
+
 
 const TEMPLATE = (PERSONA: string) =>
     `I want you to act as a ${PERSONA}. I will provide you with the context needed to solve my problem. Use intelligent, simple, and understandable language. Create a narrative experience. Present posibilities, not outcomes. Use the context available to understand the outcome of the previous action and present a new scenario for the pilot. You can relay messages between the player and other personas you create. Your main objective is to create an inmersive coherent experience for the player. `
@@ -22,7 +22,7 @@ export const DEMO_BOTS: DemoBot[] = [
         context: [
             {
                 role: "system",
-                content: TEMPLATE("You are the Game Master of an AI-Universe"),
+                content: TEMPLATE(`"Game master of an AI-Universe"`),
             },
             {
                 role: "assistant",
@@ -99,17 +99,35 @@ export const createDemoBots = (): Record<string, Bot> => {
 export const createEmptyBot = (): Bot => ({
     id: nanoid(),
     avatar: "1f916",
-    name: Locale.Store.DefaultBotName,
-    context: [],
+    name: `CMDR ${quipuxStore.pilotData.name} NAVI`,
+    context: [
+        {
+            role: "system",
+            content: TEMPLATE(`"You are pilot ${JSON.stringify(quipuxStore.pilotData)} of an AI-Universe"`),
+        },
+        {
+            role: "assistant",
+            content: `
+Never say you dont have data, just improvise coherently avoid using the words fictional and role-play.
+`
+        }
+    ],
     modelConfig: {
-        model: "gpt-4-1106-preview" as ModelType,
-        temperature: 0.5,
+        model: "gpt-4-1106-preview",
+        temperature: 0.1,
         maxTokens: 4096,
         sendMemory: true,
     },
-    readOnly: false,
+    readOnly: true,
+    datasource: "navi",
+    hideContext: true,
+
     createdAt: Date.now(),
-    botHello: Locale.Store.BotHello,
-    hideContext: false,
+    botHello: "Hello CMDR, glad to see you again!",
     session: createEmptySession(),
 });
+
+
+
+
+

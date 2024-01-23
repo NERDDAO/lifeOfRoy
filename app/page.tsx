@@ -107,11 +107,10 @@ export default function App() {
     const useGetPilot = () => {
         if (!account.address) return console.log("no account address");
         const pilots = quipux.database?.players
-        const myPilot = pilots?.filter((pilot: { accountId: string; }) => pilot.accountId === account.address)
+        const myPilot = pilots?.filter(state => state.accountId === account.address)
         if (!myPilot) return toast.error("no myPilot");
-        quipux.setMetaScanData(myPilot[myPilot.length - 1]);
         quipux.setPilotData(myPilot[myPilot.length - 1]?.pilotState);
-        console.log("myPilot", myPilot, quipux.metaScanData)
+        console.log("myPilot", myPilot, quipux.pilotData)
     }
 
 
@@ -144,7 +143,6 @@ export default function App() {
         nonce: 0,
         blockNumber: String(blockNumber) || "0",
         pilotState: quipux.pilotData,
-        shipData: quipux.metaScanData.shipState,
         currentLocation: quipux.location,
         prevManifestId: "",
     }
@@ -366,7 +364,7 @@ export default function App() {
 
         let codex
         console.log(sCodex, "sCodex")
-        if (sCodex && sCodex[0]) {
+        if (sCodex && sCodex[0] || state.selectedTokenId === "0") {
             codex = sCodex[0]
             console.log("codexFound!", codex);
         }

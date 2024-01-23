@@ -290,7 +290,7 @@ export const useGlobalState = create<GlobalState>(set => ({
     setDescription: (description: string[]) => set({ description }),
     selectedDescriptionIndex: 0,
     setSelectedDescriptionIndex: (selectedDescriptionIndex: number) => set({ selectedDescriptionIndex }),
-    selectedTokenId: "",
+    selectedTokenId: "0",
     setSelectedTokenId: (selectedTokenId: string) => set({ selectedTokenId }),
     buttonMessageId: "",
     setButtonMessageId: (buttonMessageId: string) => set({ buttonMessageId }),

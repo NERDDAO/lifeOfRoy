@@ -10,7 +10,7 @@ import { useScrollToBottom } from "@/app/hooks/useScroll";
 import { cn } from "@/app/lib/utils";
 import { useBotStore } from "@/app/store/bot";
 import { copyToClipboard } from "@/app/utils/clipboard";
-import { Clipboard, Eraser, PauseCircle, Trash } from "lucide-react";
+import { Clipboard, Eraser, PauseCircle, Pencil, Trash } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ChatControllerPool } from "../../client/controller";
@@ -43,6 +43,7 @@ export function Chat() {
     const inputRef = useRef<HTMLTextAreaElement>(null);
     const [userInput, setUserInput] = useState("");
     const [temporaryURLInput, setTemporaryURLInput] = useState("");
+    const [isHidden, setIsHidden] = useState(true);
     const { scrollRef, setAutoScroll, scrollDomToBottom } = useScrollToBottom();
 
     useEffect(() => {
@@ -327,8 +328,15 @@ export function Chat() {
                 </div>
             </ScrollArea>
             <Separator />
-            <div className="relative w-full box-border flex-col pt-2.5 p-5 space-y-2">
-                <div className="flex justify-between items-center">
+            <div className="relative w-full box-border flex-row pt-2.5 p-5 space-y-2">
+                <div className="flex row justify-between items-center">
+                    <ChatAction
+                        text="toggle input"
+                        icon={<Pencil className="w-4 h-4" />}
+                        onClick={() => setIsHidden(!isHidden)}
+                        showTitle
+                        buttonVariant="outline"
+                    />
                     <ChatAction
                         text={Locale.Chat.InputActions.Clear}
                         icon={<Eraser className="w-4 h-4" />}
@@ -336,6 +344,7 @@ export function Chat() {
                         showTitle
                         buttonVariant="outline"
                     />
+
                     {isRunning && (
                         <ChatAction
                             onClick={stop}
@@ -345,17 +354,19 @@ export function Chat() {
                             buttonVariant="outline"
                         />
                     )}
-                </div>
 
-                <ChatInput
-                    inputRef={inputRef}
-                    userInput={userInput}
-                    temporaryURLInput={temporaryURLInput}
-                    setUserInput={setUserInput}
-                    setTemporaryURLInput={setTemporaryURLInput}
-                    scrollToBottom={scrollToBottom}
-                    setAutoScroll={setAutoScroll}
-                />
+                </div>
+                {!isHidden && (
+
+                    <ChatInput
+                        inputRef={inputRef}
+                        userInput={userInput}
+                        temporaryURLInput={temporaryURLInput}
+                        setUserInput={setUserInput}
+                        setTemporaryURLInput={setTemporaryURLInput}
+                        scrollToBottom={scrollToBottom}
+                        setAutoScroll={setAutoScroll}
+                    />)}
             </div>
         </div>
     );

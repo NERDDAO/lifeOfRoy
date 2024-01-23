@@ -106,7 +106,7 @@ export type AIUBroadcast = {
     broadcastId: string;
     message: string;
     timestamp: number;
-    quipex: Quipux[]// Unix timestamp
+    quipex: Encounter[]// Unix timestamp
 };
 
 export type Participant = {
@@ -116,7 +116,7 @@ export type Participant = {
 
 export type EncounterOutcome = {
     winnerId: string;
-    stateChanges: StateChange[];
+    stateChanges: Quipux[];
     rewards: Reward[];
 };
 

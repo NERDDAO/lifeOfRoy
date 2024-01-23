@@ -10,7 +10,6 @@ const url = process.env.MONGODB_URL || 'mongodb+srv://At0x:r8MzJR2r4A1xlMOA@clus
 const client = new MongoClient(url);
 await client.connect();
 // Database Name
-
 async function llamaindex(payload: string, id: string) {
     const vectorStore = new MongoDBAtlasVectorSearch({
         mongodbClient: client,
@@ -48,13 +47,14 @@ async function generateScannerOutput(pilotEntry: any) {
              Use your creativity to  complete the format with interesting data.
            
 
-        {        
-        beaconData: Location;
-        blockNumber: ${pilotEntry.bn};
-             pilotState: PilotState,
-            locationBeacon0: Location;
-            shipState:ShipState,
-        }
+PlayerState = {
+    accountId: string;
+    nickname: string;
+    guild: Guild;
+    pilotState: PilotState;
+    shipState: ShipState;
+    inventory: Inventory;
+};
 `
             ,
         },
@@ -62,67 +62,55 @@ async function generateScannerOutput(pilotEntry: any) {
             role: "assistant",
             content: `
 
+type Location = {
+    x: number;
+    y: number;
+    z: number;
+    name: string;
+};
 
- type Location = {
-    locationId: string;
-    coordinates: [
-        x: number,
-        y: number,
-        z: number,
-    ];
-    locationName: string;
-    locationFunFact: string;
-    nearestLocationId: string;
-    navigationNotes: string;
-    imageUrl: string;
-}
-export type PilotState = {
-    pilotId: string,
-    pilotName: string,
-    pilotDescription: string,
-    imageUrl: string,
-    alignment: string,
-    guildId: string,
-    guildName: string,
-    credits: number,
-    currentThought: string,
-    stats: Stats,
-    inventory: Item[],
-    locationShip0: Location;
-}
-export type ShipState = {
+
+type PilotState = {
     pilotId: string;
-    shipId: string;
-    shipName: string;
-    owner: string;
-    locationBeacon0: Location;
+    name: string;
+    description: string;
     stats: Stats;
-    cargo: { fuel: number; supplies: number; cargo: Item[] };
-    currentStatus: string;
-    funFact: string,
-    imageUrl: string,
+    currentLocation: Location;
 };
 
-export type PlanetData = {
-    planetId: string;
-    discoveredBy: string;
-    locationBeacon0: Location;
-    Scan: {
-        enviromental_analysis: string;
-        historical_facts: string[];
-        known_entities: string[];
-        NavigationNotes: string;
-        DescriptiveText: string;
-        controlledBy: boolean | null;
-    };
+type Inventory = {
+    items: Item[];
 };
+
+type ShipState = {
+    shipId: string;
+    pilotId: string; // If needed, could link back to a PlayerState
+    shipName: string;
+    stats: ShipStats;
+    cargo: Cargo;
+};
+
+type ShipStats = {
+    health: number;
+    speed: number;
+    attack: number;
+    defense: number;
+};
+
+type Cargo = {
+    items: Item[]; // Could include more details like Quantity, Condition, etc.
+    fuel: number;
+    supplies: number;
+};
+
+
 type Item = {
     itemId: string;
     weight: number;
     rarity: string;
     aiUseAnalysis: string;
     creditValue: number;
-}`,
+};`,
         },
         {
             role: "user",
@@ -157,7 +145,7 @@ export async function POST(request: Request) {
 
     await llamaindex(JSON.stringify(attestationData), attestationData._id);
 
-
+    const { nickname, guild, pilotState, shipState, inventory } = attestationData.Attestation
     const db = client.db("aiUniverse"); // Connect to the database
     const heroCodex = db.collection('aiUniverse'); // 
 
@@ -166,8 +154,12 @@ export async function POST(request: Request) {
         {
             $addToSet: {
                 players: {
-                    userId: attestationData.Attestation?.heroCodex?.heroId,
-                    attestationData,
+                    accountId: load.address,
+                    nickname,
+                    guild,
+                    pilotState,
+                    shipState,
+                    inventory,
                 }
             }
         },
@@ -176,6 +168,3 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ beacon })
 };
-
-
-

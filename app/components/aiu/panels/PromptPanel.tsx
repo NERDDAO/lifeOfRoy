@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import Switchboard from "./Switchboard";
-import type { ApiResponses } from "@/app/types/appTypes";
 import { useAppStore, useGlobalState, useImageStore, useQuipuxStore, useSoundController } from "@/app/store/store";
 
 

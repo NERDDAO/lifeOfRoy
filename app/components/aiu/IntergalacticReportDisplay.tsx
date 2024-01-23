@@ -10,6 +10,7 @@ import { useProvider, useSigner } from "@/app/utils/wagmi-utils";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { postPilotShip } from "@/app/hooks/aiu/useAIU"
+import { Switchboard } from "@/app/components/aiu/panels/Switchboard"
 
 
 
@@ -22,7 +23,6 @@ const InterGalaReportDisplay = (props: { playHolographicDisplay: () => void }) =
     const quipux = useQuipuxStore(state => state);
     const myPilots = store.myPilots;
     //const myShip = quipux.database?.ships[0];
-    const myShip = quipux.shipData;
     const provider = useProvider();
     const easContractAddress = "0xA1207F3BBa224E2c9c3c6D5aF63D0eb1582Ce587";
     const schemaUID = "0xb151d180b92e94a9c52dec14b1e93b975edaf696ea0927223d103845cfd2ca1b";
@@ -31,14 +31,9 @@ const InterGalaReportDisplay = (props: { playHolographicDisplay: () => void }) =
     const bn = app.blockNumber;
 
     const { playHolographicDisplay } = props;
-    const selectedTokenId = 2;
-    const parsedMetadata = null;
     const account = useAccount();
 
     const address = account?.address;
-    const signer = useSigner();
-    //const pilotData = { account, nickname, occupation, guild };
-    //
     const [pilotIndex, setPilotIndex] = useState(0);
 
     const currentPilot = myPilots && myPilots[pilotIndex]
@@ -69,11 +64,9 @@ const InterGalaReportDisplay = (props: { playHolographicDisplay: () => void }) =
                 imageStore.setImageUrl(shipPic.image)
                 quipux.setLocation(r.beaconData);
                 quipux.setPilotData(r.pilotState);
-                quipux.setShipData(r.shipState);
                 await postPilotShip(r.pilotState, r.shipState, r.beaconData, address);
                 //attest = await attestPilot(r.pilotData)
                 //return attest;
-
 
             } catch {
                 console.log("Error attesting pilot or ship")
@@ -241,15 +234,13 @@ const InterGalaReportDisplay = (props: { playHolographicDisplay: () => void }) =
                 // Custom interface for ship state
                 return (
                     <>
-                        <ul className="space-y-2 space-x-2 p-6"
-
-                        >
+                        <ul className="space-y-2 space-x-2 p-6 pb-48">
                             <MyForm />
                         </ul>
                     </>);
             default:
                 // Default interface if no specific one is found
-                return <SwitchBoard />;
+                return <Switchboard />;
         }
     };
 
@@ -262,63 +253,15 @@ const InterGalaReportDisplay = (props: { playHolographicDisplay: () => void }) =
 
     return (
         <>
-            <span
-                onClick={() => {
-                    playerSelector();
-                    console.log(pilotIndex)
-                }
+            <div className="relative flex flex-row text-sm text-left spaceship-display-screen mt-1"
 
-
-                }
-                className="absolute text-2xl font-black top-24 cursor-pointer">||-----AI-U-----|| </span>
-            <img
-                className="absolute p-9 -left-0.5 ml-1.5 -mt-1.5 opacity-5 pointer-events-none -translate-y-6 -z-2"
-                src="/aiu.png"
-            />
-            <div className="relative top-[10%] overflow-auto w-full h-[90%]">
-
-                <div className="relative flex flex-col text-sm text-left spaceship-display-screen pl-2 ml-2 mt-1 space-y-1"
-
-                    style={{ width: "46%", height: "56%" }}>
-                    <CustomInterface />
-                </div>
-
-                <img className="absolute top-[5%] right-6 h-[48%] w-[45%] p-2 hex-prompt" src={imageStore.imageUrl} />
-                <div className="text-sm flex flex-wrap spaceship-display-screen absolute top-[59%] -left-1 p-4 overflow-auto"
-
-                    style={{ width: "100%", height: "25%" }}>
-                    CARGO:
-                    {myShip?.cargo && Object.entries(myShip.cargo).map((cargo: any, index: number) => (
-                        <li key={cargo} className="text-bold">{JSON.stringify(cargo)}:<span className="text-white"></span></li>))}
-
-                    <li>STATUS: {myShip?.currentStatus}</li>
-
-                    <div className="text-white">LOCATION:
-                        <ul>
-
-                            {quipux.location && (
-
-                                <ul>
-                                    {
-                                        Object.entries(quipux.location).map(([key, value], index) => (
-                                            <li key={index} className="text-bold">
-                                                {key}: <span className="text-white">{JSON.stringify(value)}</span>
-                                            </li>
-                                        ))
-                                    }
-                                </ul>
-                            )}
-                        </ul>
-
-                    </div>
-
-                    <li>FunFact:{myShip?.funFact}</li>
-                </div>
-
-                <br />
-
+                onClick={(e) => { e.stopPropagation() }}
+            >
+                <CustomInterface />
+                <img className="h-[48%] w-[45%] -ml-4 hex-prompt mb-48" src={imageStore.imageUrl} />
 
             </div>
+
         </>
     );
 };

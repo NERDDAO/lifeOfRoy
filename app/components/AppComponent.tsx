@@ -199,7 +199,6 @@ export const AppComponent = ({ children }: { children: React.ReactNode }) => {
 
     useEffect(() => {
         fetchDb();
-        console.log("quipux", quipux)
     }, []);
 
     if (!useHasHydrated()) {
