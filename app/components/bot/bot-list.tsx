@@ -11,8 +11,10 @@ import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { ScrollArea } from "../ui/scroll-area";
 import BotItem from "./bot-item";
+import { useQuipuxStore } from "@/app/store/store";
 
 export default function BotList() {
+    const pilotState = useQuipuxStore((state) => state.pilotData);
     const botStore = useBotStore();
     const navigate = useNavigate();
     const [searchText, setSearchText] = useState("");
@@ -25,7 +27,7 @@ export default function BotList() {
     };
 
     const onClickCreate = () => {
-        const newBot = botStore.create();
+        const newBot = botStore.create(pilotState);
         botStore.selectBot(newBot.id);
         setEditBotId(newBot.id);
     };

@@ -157,7 +157,7 @@ export async function POST(request: Request) {
 
     // assumed input
     const attestationData = {
-        _id: `AIU${"test"}`,
+        _id: `AIU${load.nftData.nftId}`,
         Attestation: playerData,
     };
 

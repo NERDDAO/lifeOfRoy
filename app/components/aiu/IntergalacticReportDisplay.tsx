@@ -9,7 +9,7 @@ import { useAccount, useBlockNumber } from "wagmi";
 import { useProvider, useSigner } from "@/app/utils/wagmi-utils";
 import axios from "axios";
 import toast from "react-hot-toast";
-import { postPilotShip } from "@/app/hooks/aiu/useAIU"
+import { postPilotShip, useNewPilot } from "@/app/hooks/aiu/useAIU"
 import { Switchboard } from "@/app/components/aiu/panels/Switchboard"
 
 
@@ -38,83 +38,6 @@ const InterGalaReportDisplay = (props: { playHolographicDisplay: () => void }) =
 
     const currentPilot = myPilots && myPilots[pilotIndex]
 
-    const handleSendMessage = async (data: any) => {
-        playHolographicDisplay();
-        console.log("data", data);
-        let address = data.load.address;
-        //setLoading(true);
-        try {
-            const response = await fetch("/api/newPilot", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify(data),
-            });
-            const rparse = await response.json();
-            const r = await JSON.parse(rparse.beacon);
-
-
-
-            console.log("rawResponse", r);
-            let attest, shipPic
-
-            try {
-                shipPic = await requestShip(r.shipState)
-                imageStore.setImageUrl(shipPic.image)
-                quipux.setLocation(r.beaconData);
-                quipux.setPilotData(r.pilotState);
-                await postPilotShip(r.pilotState, r.shipState, r.beaconData, address);
-                //attest = await attestPilot(r.pilotData)
-                //return attest;
-
-            } catch {
-                console.log("Error attesting pilot or ship")
-
-            } finally {/*
-                if (attest && shipPic.image) {
-                    let s: ShipState = r.shipData
-                    let i: string = shipPic.image
-                    let k: Location = r.beaconData
-                    let ship = { state: s, image: i, location: k }
-                    registerPilot(r.pilotData, attest, ship)
-                    console.log("shipData", attest, shipPic)
-                    toast.success("Pilot Attested");
-                }
-                else {
-                    toast.error("Error attesting pilot or ship")
-                }
-           */ }
-
-            console.log("rawResponse", r, quipux);
-
-        } catch (error) {
-            console.error("Error sending message:", error);
-        }
-    };
-
-
-
-
-
-    const requestShip = async (shipData: ShipState) => {
-
-
-        const response = await fetch("/api/newShip", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(shipData),
-        });
-
-        const rawResponse = await response.json();
-
-        console.log("ShipRaw", rawResponse);
-
-        return rawResponse;
-    }
-
     const playerSelector = () => {
         if (pilotIndex < myPilots.length - 1) {
             setPilotIndex(pilotIndex + 1)
@@ -142,7 +65,7 @@ const InterGalaReportDisplay = (props: { playHolographicDisplay: () => void }) =
             }
 
             let load = { values, bn, address }
-            const message = await handleSendMessage({ load });
+            const message = await useNewPilot({ load });
 
             console.log('submitting', load, values, message);
         };

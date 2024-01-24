@@ -11,20 +11,13 @@ import GraphemeSplitter from "grapheme-splitter";
 const url = process.env.MONGODB_URI || 'mongodb://0.0.0.0:27017'
 // Database Name
 const dbName = 'mementoMori';
-const quipux = useQuipuxStore.getState();
 
 
 
 import type {
-    ApiResponses,
-    ChatData,
     HeroCodex,
-    Manifest,
     NftData,
     PilotState,
-    PlanetData,
-    ProgressResponseType,
-    QuestData,
     Quipux,
     Response,
     ShipState,
@@ -32,7 +25,7 @@ import type {
 } from "@/app/types/appTypes";
 import { EAS } from "@ethereum-attestation-service/eas-sdk";
 import { nanoid } from "nanoid";
-import { Bot } from "@/app/store/bot";
+import { Bot, useBotStore } from "@/app/store/bot";
 import { createEmptySession } from "@/app/store";
 
 
@@ -65,42 +58,63 @@ export const useHeroCodex = async (nftData: NftData, blockNumber: string) => {
 
 }
 
+export const useNewPilot = async (data: any) => {
+    console.log("data", data);
+    let address = data.load.address;
+    //setLoading(true);
+    try {
+        const response = await fetch("/api/newPilot", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(data),
+        });
+        const rparse = await response.json();
+        const r = await JSON.parse(rparse.beacon);
 
 
-const TEMPLATE = (PERSONA: string) =>
-    `I want you to act as a ${PERSONA}. I will provide you with the context needed to solve my problem. Use intelligent, simple, and understandable language. Create a narrative experience. Present posibilities, not outcomes. Use the context available to understand the outcome of the previous action and present a new scenario for the pilot. You can relay messages between the player and other personas you create. Your main objective is to create an inmersive coherent experience for the player. `
-export const createPlayerBot = (): Bot => ({
-    id: nanoid(),
-    avatar: "1f916",
-    name: `CMDR ${quipux.pilotData.name} NAVI`,
-    context: [
-        {
-            role: "system",
-            content: TEMPLATE(`"You are pilot ${JSON.stringify(quipux.pilotData)} of an AI-Universe"`),
-        },
-        {
-            role: "assistant",
-            content: `
-Never say you dont have data, just improvise coherently avoid using the words fictional and role-play.
-`
-        }
-    ],
-    modelConfig: {
-        model: "gpt-4-1106-preview",
-        temperature: 0.1,
-        maxTokens: 4096,
-        sendMemory: true,
-    },
-    readOnly: true,
-    datasource: "navi",
-    hideContext: true,
 
-    createdAt: Date.now(),
-    botHello: "Hello CMDR, glad to see you again!",
-    session: createEmptySession(),
-});
+        console.log("rawResponse", r);
+        let attest, shipPic
+
+        try {
+            shipPic = await attestShip(r.shipState)
+            onClickCreate(r.pilotState);
+            //attest = await attestPilot(r.pilotData)
+            //return attest;
+
+        } catch {
+            console.log("Error attesting pilot or ship")
+
+        } finally {/*
+                if (attest && shipPic.image) {
+                    let s: ShipState = r.shipData
+                    let i: string = shipPic.image
+                    let k: Location = r.beaconData
+                    let ship = { state: s, image: i, location: k }
+                    registerPilot(r.pilotData, attest, ship)
+                    console.log("shipData", attest, shipPic)
+                    toast.success("Pilot Attested");
+                }
+                else {
+                    toast.error("Error attesting pilot or ship")
+                }
+           */ }
+
+        console.log("rawResponse", r);
+
+    } catch (error) {
+        console.error("Error sending message:", error);
+    }
+};
 
 
+const onClickCreate = (data: PilotState) => {
+    const botStore = useBotStore();
+    const newBot = botStore.create(data);
+    botStore.selectBot(newBot.id);
+};
 
 
 export const fetchDb = async (quipux: any) => {

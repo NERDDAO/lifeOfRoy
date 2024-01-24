@@ -3,8 +3,7 @@ import { nanoid } from "nanoid";
 import Locale from "../locales";
 import { ModelType } from "@/app/client/platforms/llm";
 import { createEmptySession } from "../store";
-import { useQuipuxStore } from "@/app/store/store"
-
+import { PilotState } from "../types/appTypes";
 
 
 const TEMPLATE = (PERSONA: string) =>
@@ -96,14 +95,14 @@ export const createDemoBots = (): Record<string, Bot> => {
     return map;
 };
 
-export const createEmptyBot = (): Bot => ({
+export const createEmptyBot = (pilotData: PilotState): Bot => ({
     id: nanoid(),
     avatar: "1f916",
-    name: `CMDR ${quipuxStore.pilotData.name} NAVI`,
+    name: `CMDR ${pilotData.name} NAVI`,
     context: [
         {
             role: "system",
-            content: TEMPLATE(`"You are pilot ${JSON.stringify(quipuxStore.pilotData)} of an AI-Universe"`),
+            content: TEMPLATE(`"You are pilot ${pilotData.name}, ${pilotData.description} of an AI-Universe"`),
         },
         {
             role: "assistant",
