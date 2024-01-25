@@ -1,15 +1,13 @@
-
+import "@rainbow-me/rainbowkit/styles.css";
+import { Metadata } from "next";
+import { AppComponent as ScaffoldEthAppWithProviders } from "@/app/components/AppComponent";
 import "@/app/globals.css";
-import { type Metadata } from "next";
-
-import { AppComponent } from "@/app/components/AppComponent";
-import Dashboard from "./components/aiu/Dashboard";
-import { Header } from "./components/Header";
 
 const baseUrl = process.env.NEXT_PUBLIC_VERCEL_URL
     ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`
     : `http://localhost:${process.env.PORT}`;
 const imageUrl = `${baseUrl}/thumbnail.jpg`;
+
 export const metadata: Metadata = {
     metadataBase: new URL(baseUrl),
     title: {
@@ -46,29 +44,11 @@ export const metadata: Metadata = {
 const ScaffoldEthApp = ({ children }: { children: React.ReactNode }) => {
     return (
         <html>
-
-
-
             <body>
-                <link rel="preconnect" href="https://fonts.gstatic.com" />
-                <link href="https://fonts.googleapis.com/css2?family=Orbitron&display=swap" rel="stylesheet" />
-
-                <AppComponent>
-                    <Dashboard>
-
-
-                        {children}
-
-
-                    </Dashboard>
-
-                </AppComponent>
+                <ScaffoldEthAppWithProviders>{children}</ScaffoldEthAppWithProviders>
             </body>
         </html>
     );
 };
 
 export default ScaffoldEthApp;
-
-
-/***/

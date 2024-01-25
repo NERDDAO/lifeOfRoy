@@ -16,12 +16,11 @@ export const DEMO_BOTS: DemoBot[] = [
     {
         id: "1",
         avatar: "1f5a5-fe0f",
-        name: "N.A.V.I. - Natural Artificial Virtual Intelligence",
-        botHello: "Hello CMDR, glad to see you again!",
+        name: `ROY`,
         context: [
             {
                 role: "system",
-                content: TEMPLATE(`"Game master of an AI-Universe"`),
+                content: TEMPLATE(`You are simulating the life of ROY. use the new year setulution as context and generate a year in Roy's life.`),
             },
             {
                 role: "assistant",
@@ -37,8 +36,11 @@ Never say you dont have data, just improvise coherently avoid using the words fi
             sendMemory: true,
         },
         readOnly: true,
-        datasource: "dnd_reference",
+        datasource: "navi",
         hideContext: true,
+
+        createdAt: Date.now(),
+        botHello: "Happy New Year! Whats your New years resulution?",
     },
     {
         id: "4",
@@ -95,14 +97,14 @@ export const createDemoBots = (): Record<string, Bot> => {
     return map;
 };
 
-export const createEmptyBot = (pilotData: PilotState): Bot => ({
+export const createEmptyBot = (): Bot => ({
     id: nanoid(),
     avatar: "1f916",
-    name: `CMDR ${pilotData.name} NAVI`,
+    name: `ROY`,
     context: [
         {
             role: "system",
-            content: TEMPLATE(`"You are pilot ${pilotData.name}, ${pilotData.description} of an AI-Universe"`),
+            content: TEMPLATE(`You are simulating the life of ROY. use the new year setulution as context and generate a year in Roy's life.`),
         },
         {
             role: "assistant",
@@ -122,7 +124,7 @@ Never say you dont have data, just improvise coherently avoid using the words fi
     hideContext: true,
 
     createdAt: Date.now(),
-    botHello: "Hello CMDR, glad to see you again!",
+    botHello: "Happy New Year! Whats your New years resulution?",
     session: createEmptySession(),
 });
 

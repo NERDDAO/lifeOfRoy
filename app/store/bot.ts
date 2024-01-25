@@ -42,7 +42,6 @@ type BotStore = BotState & {
     getByShareId: (shareId: string) => Bot | undefined;
     getAll: () => Bot[];
     create: (
-        data: PilotState,
         bot?: Partial<Bot>,
         options?: { readOnly?: boolean; reset?: boolean },
     ) => Bot;
@@ -90,12 +89,12 @@ export const useBotStore = create<BotStore>()(
                     .getAll()
                     .find((b) => shareId === b.share?.id);
             },
-            create(data, bot, options) {
+            create(bot, options) {
                 const bots = get().bots;
                 const id = nanoid();
                 const session = createEmptySession();
                 bots[id] = {
-                    ...createEmptyBot(data),
+                    ...createEmptyBot(),
                     ...bot,
                     id,
                     session,
