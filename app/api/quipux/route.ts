@@ -1,7 +1,7 @@
 import OpenAI from "openai";
 import type { NftData, PilotState, ShipState, Location, PlayerState } from "@/app/types/appTypes";
 import { MongoDBAtlasVectorSearch, VectorStoreIndex, storageContextFromDefaults, Document } from "llamaindex";
-import { MongoClient } from "mongodb";
+import { MongoClient, ObjectId } from "mongodb";
 import { NextResponse } from "next/server";
 
 const url = process.env.MONGODB_URL || 'mongodb+srv://At0x:r8MzJR2r4A1xlMOA@cluster1.upfglfg.mongodb.net/?retryWrites=true&w=majority'
@@ -50,16 +50,13 @@ async function generateScannerOutput(manifest: PlayerState, msgs: any) {
 The action is what the player wants to do. you must determine wether the action is successful and utilize the oucome to advance the narrative in a short vignette..
             Fill out the JSON structure provided.
              Use your creativity to  complete the format with interesting data.
-{
-    narrativeUpdate: string;
-    creditsAwarded: number;
-    spaceDescription: string;
-    stateUpdate:{
-    pilotState: PilotState,
-    shipData: ShipState,
-    currentLocation: Location;
-    }
-}
+ Encounter = {
+    encounterId: string;
+    description: string;
+    participants: Participant[];
+    outcome: EncounterOutcome;
+    narrativeText: string;
+};
 `
             ,
         },
@@ -70,47 +67,41 @@ The action is what the player wants to do. you must determine wether the action 
    ACTION: ${manifest}
 
 Describe the view from the spaceship cockpit in the spaceDescription field.
- Types:           
-type PilotState = {
-    pilotId: string,
-    pilotName: string,
-    pilotDescription: string,
-    imageUrl: string,
-    alignment: string,
-    guildId: string,
-    guildName: string,
-    credits: number,
-    currentThought: string,
-    stats: Stats,
-    inventory: Item[],
-    locationShip0: Location;
-}
-type ShipState = {
-    pilotId: string;
-    shipId: string;
-    shipName: string;
-    owner: string;
-    locationBeacon0: Location;
-    stats: Stats;
-    cargo: { fuel: number; supplies: number; cargo: Item[] };
-    currentStatus: string;
-    funFact: string,
-    imageUrl: string,
+ Types:    
+
+type Participant = {
+    participantId: string;
+    role: string; // Could be 'player', 'npc', 'environment', etc.
+};
+
+type EncounterOutcome = {
+    winnerId: string;
+    stateChanges: Quipux[];
+    rewards: Reward[];
 };
 
 type Location = {
-    quadrantId: string;
-    coordinates: [
-        x: number,
-        y: number,
-        z: number,
-    ];
-    locationName: string;
-    locationFunFact: string;
-    nearestLocationId: string;
-    navigationNotes: string;
-    imageUrl: string;
-}
+    x: number;
+    y: number;
+    z: number;
+    name: string;
+};
+
+type ScanData = {
+    environmentalAnalysis: string;
+    historicalFacts: string[];
+    knownEntities: string[];
+};
+type Quipux = {
+    affectedEntityId: string;
+    newState: any;
+};
+
+type Reward = {
+    recipientId: string;
+    items: Item[];
+    credits: number;
+};
 
 type Item = {
     itemId: string;
@@ -146,6 +137,32 @@ export async function POST(request: Request) {
     const load = await request.json();
     console.log(load)
     const beacon = await generateScannerOutput(load.manifest, load.messages);
+
+    await llamaindex(JSON.stringify(beacon), load.manifest.uid);
+    const attestationData = {
+        _id: `QPX${load.manifest.uid}`,
+        outcome: JSON.parse(beacon ? beacon : "null"),
+    };
+    const { encounterId, description, participants, outcome, narrativeText } = attestationData.outcome;
+    const db = client.db("aiUniverse"); // Connect to the database
+    const heroCodex = db.collection('aiUniverse'); // 
+
+    await heroCodex.updateOne(
+        { _id: new ObjectId("65a59578fca597eec9ae4aef") },
+        {
+            $addToSet: {
+                encounters: {
+                    qpxId: load.manifest.uid,
+                    encounterId,
+                    participants,
+                    description,
+                    outcome,
+                    narrativeText,
+                }
+            }
+        },
+        { upsert: true },// this creates new document if none match the filter
+    );
     return NextResponse.json({ beacon })
 };
 

@@ -37,7 +37,7 @@ Never say you dont have data, just improvise coherently avoid using the words fi
             sendMemory: true,
         },
         readOnly: true,
-        datasource: "navi",
+        datasource: "dnd_reference",
         hideContext: true,
     },
     {

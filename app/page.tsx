@@ -4,6 +4,7 @@ import SpaceshipInterface from "./components/aiu/panels/SpaceshipInterface";
 import AcquiringTarget from "./components/aiu/panels/AcquiringTarget";
 import PromptPanel from "./components/aiu/panels/PromptPanel";
 import DescriptionPanel from "./components/aiu/panels/DescriptionPanel";
+
 import { MarqueePanel } from "./components/aiu/panels/MarqueePannel";
 import ReadAIU from "./components/aiu/ReadAIU";
 import { useCallback, useEffect, useState } from "react";
@@ -163,7 +164,6 @@ export default function App() {
         // Signer must be an ethers-like signer.
         // Initialize SchemaEncoder with the schema string
         const address = account.address && account.address || "0x0000000";
-        const utf8EncodeText = new TextEncoder();
 
         const schemaEncoder = new SchemaEncoder("uint16 heroId,string pilotAddress,uint32 nonce");
         const encodedData = schemaEncoder.encodeData([
@@ -232,46 +232,10 @@ export default function App() {
         }
     };
 
-    const postQuipux = async (r: any, uid: string) => {
-
-        try {
-            const newManifest = {
-                uid: uid,
-                action: manifest.action,
-                heroId: manifest.heroId,
-                address: account.address || manifest.address,
-                nonce: manifest.nonce++,
-                blockNumber: app.blockNumber,
-                pilotState: r.pilotState,
-                shipData: r.shipData,
-                currentLocation: r.currentLocation,
-                prevManifestId: manifest.prevManifestId,
-            };
-            const response = await fetch("http://0.0.0.0:3000/aiu/quipuxUpdate",
-                {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({ newManifest }),
-
-                }
-
-            ); // assume the same host
-            ;
-            console.log("Player data from DB", response);
-        } catch {
-            console.log("no response")
-        }
-
-    }
-
 
 
 
     const submitPrompt = async () => {
-
-
 
         if (app.waitingForWebhook) {
             console.log("Already waiting for webhook, please wait for response.");
@@ -283,13 +247,7 @@ export default function App() {
         try {
             const uid = await attestQuipux()
             const r = await handleSendMessage()
-            quipux.setPilotData(r.stateUpdate.pilotState);
-            quipux.setMetaScanData(r.stateUpdate.shipData);
-            quipux.setLocation(r.stateUpdate.currentLocation);
-            quipux.routeLog.push(r.stateUpdate.currentLocation);
-            quipux.story.push(r.narrativeUpdate);
-            await postQuipux(r, uid || "")
-            let prompt = `"A view from a spaceship that just left hyperspace into:" + "${r.spaceDescription}"`
+            let prompt = `"A view from a spaceship that just left hyperspace into:" + "${r.description}"`
             console.log("uid", uid, r)
 
             const rs = await fetch("/api/newShip", {
